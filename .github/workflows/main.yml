@@ -18,6 +18,8 @@ jobs:
 
       - name: Validate Folder Exists
         run: |
+          pwd
+          echo "$FOLDER_PATH"
           [[ -z "$FOLDER_PATH" ]] && echo "Error: Folder path is not defined" && exit 1
 
       - name: Find latest subfolder
