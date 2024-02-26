@@ -2,8 +2,6 @@ name: Create Release from Latest Subfolder
 
 on:
   push:
-    tags:
-      - v*.*.*
     branches:
       - main
 
