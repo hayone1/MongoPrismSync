@@ -8,7 +8,7 @@ on:
 env:
     FOLDER_PATH: templates
     LATEST_TAG: v0.0.1
-    LATEST_VERSION: v1alpha1
+    # LATEST_VERSION: v1alpha1
     RELEASE_README: RELEASE.md
 jobs:
   create-release:
@@ -31,7 +31,7 @@ jobs:
       - name: Zip subfolder
         run: |
           cd $FOLDER_PATH
-          zip -r "templates_${LATEST_VERSION}.zip" "$FOLDER_PATH/${{ steps.get_latest_subfolder.outputs.latest_subfolder }}/*"
+          zip -r "templates_${{ steps.get_latest_subfolder.outputs.latest_subfolder }}.zip" "$FOLDER_PATH/${{ steps.get_latest_subfolder.outputs.latest_subfolder }}/*"
 
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
