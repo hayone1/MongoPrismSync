@@ -23,34 +23,35 @@ jobs:
           echo "$FOLDER_PATH"
           if [ ! -d "$FOLDER_PATH" ]; then echo "Error: Folder path is not defined"; fi
 
-      # - name: Find latest subfolder
-      #   # shell: bash
-      #   id: get_latest_subfolder
-      #   run: |
-      #     latest_subfolder=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
-      #     echo "LATEST_SUBFOLDER=${latest_subfolder}" >> "$GITHUB_ENV"
-
-      # - name: Zip subfolder
-      #   run: |
-      #     echo ${{ env.LATEST_SUBFOLDER }}
-      #     zip -r "templates_${LATEST_SUBFOLDER}.zip" "$FOLDER_PATH/${LATEST_SUBFOLDER}/*"
-
-      # - name: Create GitHub release
-      #   uses: ncipollo/release-action@v1
-      #   # uses: actions/create-release@v1
-      #   with:
-      #     name: mongoprism
-      #     allowUpdates: true
-      #     artifacts: "templates_${LATEST_VERSION}.zip"
-      #     tag: $LATEST_TAG
-      #     bodyFile: $RELEASE_README
-      #     draft: true
-      #     makeLatest: true
-      - name: Format the date of next Tuesday
-        id: tuesday
-        run: echo "abbr=$(date '+tuesday%y%m%d')" >> $GITHUB_ENV
-
-      - name: Read exported variable
+      - name: Find latest subfolder
+        shell: bash
+        id: get_latest_subfolder
         run: |
-          echo "$abbr"
-          echo "${{ env.abbr }}"
+          # latest_subfolder=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
+          latest_subfolder=$(ls -d $FOLDER_PATH/*/ | sort -r | head -n 1 | cut -d'/' -f2)
+          echo "LATEST_SUBFOLDER=${latest_subfolder}" >> "$GITHUB_ENV"
+
+      - name: Zip subfolder
+        run: |
+          echo ${{ env.LATEST_SUBFOLDER }}
+          zip -r "templates_${LATEST_SUBFOLDER}.zip" "$FOLDER_PATH/${LATEST_SUBFOLDER}/*"
+
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        # uses: actions/create-release@v1
+        with:
+          name: mongoprism
+          allowUpdates: true
+          artifacts: "templates_${LATEST_VERSION}.zip"
+          tag: $LATEST_TAG
+          bodyFile: $RELEASE_README
+          draft: true
+          makeLatest: true
+      # - name: Format the date of next Tuesday
+      #   id: tuesday
+      #   run: echo "abbr=$(date '+tuesday%y%m%d')" >> $GITHUB_ENV
+
+      # - name: Read exported variable
+      #   run: |
+      #     echo "$abbr"
+      #     echo "${{ env.abbr }}"
