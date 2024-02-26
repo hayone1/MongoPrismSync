@@ -31,8 +31,8 @@ jobs:
           echo "LATEST_SUBFOLDER=${latest_subfolder}" >> "$GITHUB_ENV"
 
       - name: Zip subfolder
-        shell: bash
         run: |
+          echo $LATEST_SUBFOLDER
           zip -r "templates_${LATEST_SUBFOLDER}.zip" "$FOLDER_PATH/${LATEST_SUBFOLDER}/*"
 
       - name: Create GitHub release
