@@ -9,6 +9,7 @@ env:
     FOLDER_PATH: templates
     LATEST_TAG: v0.0.1
     LATEST_VERSION: v1alpha1
+    RELEASE_README: RELEASE.md
 jobs:
   create-release:
     runs-on: ubuntu-latest
@@ -24,14 +25,14 @@ jobs:
       - name: Find latest subfolder
         id: get_latest_subfolder
         run: |
-          cd $FOLDER_PATH
-          LATEST_SUBFOLDER=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
+          latest_subfolder=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
           echo "::set-output name=latest_folder::$latest_folder"
+          echo "latest_subfolder=$latest_subfolder" >> "$GITHUB_OUTPUT"
 
       - name: Zip subfolder
         run: |
           cd $FOLDER_PATH
-          zip -r "${LATEST_SUBFOLDER}_${LATEST_VERSION}.zip" "$FOLDER_PATH/$LATEST_SUBFOLDER/*"
+          zip -r "templates_${LATEST_VERSION}.zip" "$FOLDER_PATH/$latest_subfolder/*"
 
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
@@ -39,8 +40,8 @@ jobs:
         with:
           name: mongoprism
           allowUpdates: true
-          artifacts: "$FOLDER_PATH/$LATEST_SUBFOLDER.zip"
+          artifacts: "$FOLDER_PATH/$latest_subfolder.zip"
           tag: $LATEST_TAG
-          bodyFile: ./.github/RELEASE.md
+          bodyFile: $RELEASE_README
           draft: true
           makeLatest: true
