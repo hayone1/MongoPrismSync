@@ -8,7 +8,7 @@ on:
       - main
 
 env:
-    FOLDER_PATH: ./templates
+    FOLDER_PATH: templates
     LATEST_TAG: v1alpha1
 jobs:
   create-release:
@@ -20,7 +20,7 @@ jobs:
         run: |
           ls
           echo "$FOLDER_PATH"
-          [[ -z "$FOLDER_PATH" ]] && echo "Error: Folder path is not defined" && exit 1
+          [[ ! -d "$FOLDER_PATH" ]] && echo "Error: Folder path is not defined" && exit 1
 
       - name: Find latest subfolder
         id: get_latest_subfolder
