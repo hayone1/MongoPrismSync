@@ -13,6 +13,8 @@ env:
 jobs:
   create-release:
     runs-on: ubuntu-latest
+    outputs:
+      handle: ${{ steps.get_latest_subfolder.outputs.latest_subfolder }}
     steps:
       - uses: actions/checkout@v3
 
