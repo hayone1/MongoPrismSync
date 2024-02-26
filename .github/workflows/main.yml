@@ -8,7 +8,7 @@ on:
       - main
 
 env:
-    FOLDER_PATH: ./templates/
+    FOLDER_PATH: ./templates
     LATEST_TAG: v1alpha1
 jobs:
   create-release:
@@ -18,7 +18,7 @@ jobs:
 
       - name: Validate Folder Exists
         run: |
-          pwd
+          ls
           echo "$FOLDER_PATH"
           [[ -z "$FOLDER_PATH" ]] && echo "Error: Folder path is not defined" && exit 1
 
