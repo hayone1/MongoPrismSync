@@ -32,7 +32,7 @@ jobs:
 
       - name: Zip subfolder
         run: |
-          echo $LATEST_SUBFOLDER
+          echo ${{ env.LATEST_SUBFOLDER }}
           zip -r "templates_${LATEST_SUBFOLDER}.zip" "$FOLDER_PATH/${LATEST_SUBFOLDER}/*"
 
       - name: Create GitHub release
