@@ -44,7 +44,7 @@ jobs:
           allowUpdates: true
           artifacts: "templates_${LATEST_VERSION}.zip"
           tag: $LATEST_TAG
-          bodyFile: $RELEASE_README
+          bodyFile: ${{ env.RELEASE_README }}
           draft: true
           makeLatest: true
       # - name: Format the date of next Tuesday
