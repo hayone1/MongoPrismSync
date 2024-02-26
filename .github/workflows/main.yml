@@ -1,0 +1,43 @@
+name: Create Release from Latest Subfolder
+
+on:
+  push:
+    tags:
+      - v*.*.*
+
+env:
+    FOLDER_PATH: ./templates/
+    LATEST_TAG: v1alpha1
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Validate Folder Exists
+        run: |
+          [[ -z "$FOLDER_PATH" ]] && echo "Error: Folder path is not defined" && exit 1
+
+      - name: Find latest subfolder
+        id: get_latest_subfolder
+        run: |
+          cd $FOLDER_PATH
+          LATEST_SUBFOLDER=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
+          echo "::set-output name=latest_folder::$latest_folder"
+
+      - name: Zip subfolder
+        run: |
+          cd $FOLDER_PATH
+          zip -r "$LATEST_SUBFOLDER.zip" "$FOLDER_PATH/$LATEST_SUBFOLDER/*"
+
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        # uses: actions/create-release@v1
+        with:
+          name: mongoprism
+          allowUpdates: true
+          artifacts: "$FOLDER_PATH/$LATEST_SUBFOLDER.zip"
+          tag: $LATEST_TAG
+          bodyFile: ./.github/RELEASE.md
+          draft: true
+          makeLatest: true
