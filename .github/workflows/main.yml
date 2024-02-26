@@ -20,7 +20,8 @@ jobs:
         run: |
           ls
           echo "$FOLDER_PATH"
-          [ ! -d "$FOLDER_PATH" ] && echo "Error: Folder path is not defined" && exit 1
+          # [ ! -d "$FOLDER_PATH" ] && echo "Error: Folder path is not defined" && exit 1
+          if [ ! -d "$FOLDER_PATH" ]; then echo "Error: Folder path is not defined"; fi
 
       - name: Find latest subfolder
         id: get_latest_subfolder
