@@ -19,18 +19,21 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Validate Folder Exists
+        shell: bash
         run: |
           ls
           echo "$FOLDER_PATH"
           if [ ! -d "$FOLDER_PATH" ]; then echo "Error: Folder path is not defined"; fi
 
       - name: Find latest subfolder
+        shell: bash
         id: get_latest_subfolder
         run: |
-          latest_subfolder=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
-          echo "latest_subfolder=$latest_subfolder" >> "$GITHUB_OUTPUT"
+          latest=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
+          echo "latest_subfolder=$latest" >> "$GITHUB_OUTPUT"
 
       - name: Zip subfolder
+        shell: bash
         run: |
           cd $FOLDER_PATH
           zip -r "templates_${{ steps.get_latest_subfolder.outputs.latest_subfolder }}.zip" "$FOLDER_PATH/${{ steps.get_latest_subfolder.outputs.latest_subfolder }}/*"
