@@ -24,11 +24,11 @@ jobs:
           if [ ! -d "$FOLDER_PATH" ]; then echo "Error: Folder path is not defined"; fi
 
       - name: Find latest subfolder
-        shell: bash
+        # shell: bash
         id: get_latest_subfolder
         run: |
           latest_subfolder=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
-          echo "LATEST_SUBFOLDER=$latest_subfolder" >> "$GITHUB_ENV"
+          echo "LATEST_SUBFOLDER=${latest_subfolder}" >> "$GITHUB_ENV"
 
       - name: Zip subfolder
         shell: bash
