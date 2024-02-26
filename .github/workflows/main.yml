@@ -14,7 +14,7 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     outputs:
-      handle: ${{ steps.get_latest_subfolder.outputs.latest_subfolder }}
+      handle: ${{ steps.get_LATEST_SUBFOLDER.outputs.LATEST_SUBFOLDER }}
     steps:
       - uses: actions/checkout@v3
 
@@ -29,14 +29,13 @@ jobs:
         shell: bash
         id: get_latest_subfolder
         run: |
-          latest=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
-          echo "latest_subfolder=$latest" >> "$GITHUB_OUTPUT"
+          latest_subfolder=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
+          echo "LATEST_SUBFOLDER=$latest_subfolder" >> "$GITHUB_ENV"
 
       - name: Zip subfolder
         shell: bash
         run: |
-          cd $FOLDER_PATH
-          zip -r "templates_${{ steps.get_latest_subfolder.outputs.latest_subfolder }}.zip" "$FOLDER_PATH/${{ steps.get_latest_subfolder.outputs.latest_subfolder }}/*"
+          zip -r "templates_${LATEST_SUBFOLDER}.zip" "$FOLDER_PATH/${LATEST_SUBFOLDER}/*"
 
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
