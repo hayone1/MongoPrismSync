@@ -45,7 +45,7 @@ jobs:
           artifacts: "templates_${{ env.LATEST_SUBFOLDER }}.zip"
           tag: "${{ env.LATEST_SUBFOLDER }}_${{ env.LATEST_TAG }}"
           bodyFile: ${{ env.RELEASE_README }}
-          draft: true
+          # draft: true
           prerelease: true
           removeArtifacts: true
           omitDraftDuringUpdate: true
