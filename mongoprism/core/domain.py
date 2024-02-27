@@ -9,12 +9,11 @@ import pathlib
 import re
 import tempfile
 from typing import Self
-import aiofiles
+from mongoprism.core import utils
 
 
 from pydantic import BaseModel
 from mongoprism import logger
-from pymongo import MongoClient, database
 
 class CreateIndexOptions:
     ADD = "add"
@@ -149,33 +148,42 @@ class DatabaseConfig(BaseModel):
             logger.debug(f"database: {self.name}, indices: {property.indices}")
         return self
 
-class MongoMigration(BaseModel):
-    kind: str = "MongoMigration"
+class CustomResource(BaseModel):
+    apiVersion: str = "migration.codejourney.io/v1alpha1"
+    kind: str = "PrismMigration"
     metadata: dict = dict()
+
+class MongoMigrationSpec(BaseModel):
     secretVars: dict = dict()
     # dump_folder: str = "dump"
-    source_conn_string: str = "*"
-    destination_conn_string: str = "*"
+    source_conn_string: str = ""
+    destination_conn_string: str = ""
     connectivityRetry: int = 5
+    remote_template: str = "https://github.com/hayone1/MongoPrismSync/releases/download/untagged-38b2ab9338a6bbbcbb17/templates_v1alpha1.zip"
     databaseConfig: list[DatabaseConfig]
 
-    def Init(self, args: argparse.Namespace) -> Self:
+class MongoMigration(CustomResource):
+    spec: MongoMigrationSpec = MongoMigrationSpec()
+
+    def Init(self: Self, secret_vars_path: str) -> Self:
         # overwrite secretvars with content of secret_vars file
-        if pathlib(args.secret_vars).exists():
-            with open(args.secret_vars, 'r') as file:
+        # if secret vars already exists
+        secret_vars_file = utils.get_full_path(secret_vars_path)
+        if os.path.exists(secret_vars_file):
+            with open(secret_vars_file, 'r') as file:
                 secret_data: dict = yaml.safe_load(file)
                 if 'data' in secret_data:
                     #everything ends up as stringData
                     for key, value in secret_data['data'].items():
-                        self.secretVars['stringData'] = base64.b64decode(value).decode('utf-8')
+                        self.spec.secretVars['stringData'] = base64.b64decode(value).decode('utf-8')
                 elif 'stringData' in secret_data:
-                    self.secretVars = secret_data
+                    self.spec.secretVars = secret_data
                 else:
                     logger.error("Secret definition invalid, cannot find key: data or stringData")
                     raise Exception("Secret definition invalid, cannot find key: data or stringData")
-        #overwrite source_conn_string with what is in cmd args
-        if (args.source_conn_string != ""):
-            self.source_conn_string = args.source_conn_string
+        # #overwrite source_conn_string with what is in cmd args
+        # if (args.source_conn_string != ""):
+        #     self.source_conn_string = args.source_conn_string
         # if (args.destination_conn_string != "*"):
         #     _mongoMigration.source_conn_string = args.destination_conn_string
 

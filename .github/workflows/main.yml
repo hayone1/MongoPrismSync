@@ -34,7 +34,7 @@ jobs:
       - name: Zip subfolder
         run: |
           echo ${{ env.LATEST_SUBFOLDER }}
-          zip -r -y "templates_${LATEST_SUBFOLDER}.zip" "$FOLDER_PATH/${LATEST_SUBFOLDER}"
+          zip -r -y "templates_${LATEST_TAG}.zip" "$FOLDER_PATH/${LATEST_SUBFOLDER}/*"
 
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
@@ -42,8 +42,8 @@ jobs:
         with:
           name: mongoprism
           allowUpdates: true
-          artifacts: "templates_${{ env.LATEST_SUBFOLDER }}.zip"
-          tag: $LATEST_TAG
+          artifacts: "templates_${{ env.LATEST_TAG }}.zip"
+          tag: ${{ env.LATEST_SUBFOLDER }}
           bodyFile: ${{ env.RELEASE_README }}
           draft: true
           makeLatest: true
