@@ -33,8 +33,9 @@ jobs:
 
       - name: Zip subfolder
         run: |
-          echo ${{ env.LATEST_SUBFOLDER }}
-          zip -r -y "templates_${LATEST_SUBFOLDER}.zip" . -i "$FOLDER_PATH/${LATEST_SUBFOLDER}/*"
+          curr_dir=$(pwd)
+          # zip -r -y "templates_${LATEST_SUBFOLDER}.zip" . -i "$FOLDER_PATH/${LATEST_SUBFOLDER}/*"
+          (cd $FOLDER_PATH/${LATEST_SUBFOLDER}; zip -r "${curr_dir}/templates_${LATEST_SUBFOLDER}.zip" *)
 
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
