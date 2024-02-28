@@ -87,4 +87,4 @@ jobs:
           pipenv install
       - name: Run tests
         run: |
-          pipenv run pytest $TEMPLATE_FOLDER_PATH -s
+          pipenv run pytest $TESTS_PATH -s
