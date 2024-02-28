@@ -6,7 +6,8 @@ on:
       - main
 
 env:
-    FOLDER_PATH: templates
+    TEMPLATE_FOLDER_PATH: templates
+    TESTS_PATH: templates
     LATEST_TAG: v0.0.1
     # LATEST_VERSION: v1alpha1
     RELEASE_README: RELEASE.md
@@ -20,22 +21,22 @@ jobs:
         shell: bash
         run: |
           ls
-          echo "$FOLDER_PATH"
-          if [ ! -d "$FOLDER_PATH" ]; then echo "Error: Folder path is not defined"; fi
+          echo "$TEMPLATE_FOLDER_PATH"
+          if [ ! -d "$TEMPLATE_FOLDER_PATH" ]; then echo "Error: Folder path is not defined"; fi
 
       - name: Find latest subfolder
         shell: bash
         id: get_latest_subfolder
         run: |
-          # latest_subfolder=$(ls -1 -t $FOLDER_PATH | grep "^d" | head -n1)
-          latest_subfolder=$(ls -d $FOLDER_PATH/*/ | sort -r | head -n 1 | cut -d'/' -f2)
+          # latest_subfolder=$(ls -1 -t $TEMPLATE_FOLDER_PATH | grep "^d" | head -n1)
+          latest_subfolder=$(ls -d $TEMPLATE_FOLDER_PATH/*/ | sort -r | head -n 1 | cut -d'/' -f2)
           echo "LATEST_SUBFOLDER=${latest_subfolder}" >> "$GITHUB_ENV"
 
       - name: Zip subfolder
         run: |
           curr_dir=$(pwd)
-          # zip -r -y "templates_${LATEST_SUBFOLDER}.zip" . -i "$FOLDER_PATH/${LATEST_SUBFOLDER}/*"
-          (cd $FOLDER_PATH/${LATEST_SUBFOLDER}; zip -r "${curr_dir}/templates_${LATEST_SUBFOLDER}.zip" *)
+          # zip -r -y "templates_${LATEST_SUBFOLDER}.zip" . -i "$TEMPLATE_FOLDER_PATH/${LATEST_SUBFOLDER}/*"
+          (cd $TEMPLATE_FOLDER_PATH/${LATEST_SUBFOLDER}; zip -r "${curr_dir}/templates_${LATEST_SUBFOLDER}.zip" *)
 
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
@@ -68,7 +69,7 @@ jobs:
       - name: Validate Folder Exists
         shell: bash
         run: |
-          if [ ! -d "$FOLDER_PATH" ]; then echo "Error: Folder path ${FOLDER_PATH} is not defined"; fi
+          if [ ! -d "$TEMPLATE_FOLDER_PATH" ]; then echo "Error: Folder path ${TEMPLATE_FOLDER_PATH} is not defined"; fi
 
       - name: Set up Python
         # This is the version of the action for setting up Python, not the Python version.
@@ -86,6 +87,4 @@ jobs:
           pipenv install
       - name: Run tests
         run: |
-          ls
-          echo "Folder Path: $FOLDER_PATH"
-          pipenv run pytest $FOLDER_PATH -s
+          pipenv run pytest $TEMPLATE_FOLDER_PATH -s
