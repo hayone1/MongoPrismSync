@@ -10,10 +10,9 @@ import re
 import tempfile
 from typing import Self
 from mongoprism.core import utils
-
-
 from pydantic import BaseModel
 from mongoprism import logger
+from pymongo import MongoClient, database
 
 class CreateIndexOptions:
     ADD = "add"
@@ -47,9 +46,6 @@ class CollectionProperty(BaseModel):
             logger.warning(f"invalid value for unique_index_key: {self.unique_index_key}, using '_id_' instead")
             self.unique_index_key = "_id_"
 
-        #indices already specified manually
-        
-        
         #else
         index_info = db[self.name].index_information()
         if (len(self.indices) > 0):
@@ -82,17 +78,20 @@ class CollectionsConfig(BaseModel):
 class Constants:
     command = "command"
     document = "document"
+    secret_vars_key = "MONGOSOURCEPASSWORD"
+    config_folder_location_key = "CONFIGFOLDER"
+    config_file_name = "prismconfig.yaml"
 class DatabaseConfig(BaseModel):
-    name: str
+    name: str = ""
     skip: bool = False
     # replicate_index: bool = False
     replicate_mode: str = Constants.command + Constants.document
     create_index: str | bool = True
     cleanup_backup: bool = True
-    source_authdb: str
-    source_db: str
+    source_authdb: str = ""
+    source_db: str = ""
     # destination_authdb: str
-    destination_db: str
+    destination_db: str = ""
     collections_config: CollectionsConfig = CollectionsConfig()
     shard: ShardData = ShardData()
     preCollectionCommands: str = "db.runCommand({ ping: 1 });"
@@ -159,8 +158,8 @@ class MongoMigrationSpec(BaseModel):
     source_conn_string: str = ""
     destination_conn_string: str = ""
     connectivityRetry: int = 5
-    remote_template: str = "https://github.com/hayone1/MongoPrismSync/releases/download/untagged-38b2ab9338a6bbbcbb17/templates_v1alpha1.zip"
-    databaseConfig: list[DatabaseConfig]
+    remote_template: str = "https://github.com/hayone1/MongoPrismSync/releases/download/v1alpha1_v0.0.1/templates_v1alpha1.zip"
+    databaseConfig: list[DatabaseConfig] = [DatabaseConfig()]
 
 class MongoMigration(CustomResource):
     spec: MongoMigrationSpec = MongoMigrationSpec()

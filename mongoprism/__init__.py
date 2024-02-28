@@ -5,6 +5,8 @@ __version__ = '0.0.1'
 
 import logging
 from pythonjsonlogger import jsonlogger
+from rich.logging import RichHandler
+
 
 
 (
@@ -12,8 +14,9 @@ from pythonjsonlogger import jsonlogger
     ARG_ERROR,
     DIR_ACCESS_ERROR,
     READ_CONFIG_ERROR,
-    INVALID_CONFIG_ERROR
-) = range(5)
+    INVALID_CONFIG_ERROR,
+    EXTRACT_FILE_ERROR,
+) = range(6)
 
 ERRORS = {
     ARG_ERROR: "Argument parse error",
@@ -25,18 +28,15 @@ ERRORS = {
 #################logging##################
 handler = logging.StreamHandler()  # Or FileHandler or anything else
 # Configure the fields to include in the JSON output. message is the main log string itself
-format_str = "%(asctime)s | method %(funcName)s, line %(lineno)d | %(levelname)s | %(message)s"
-formatter = jsonlogger.JsonFormatter(format_str)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True)]
+)
 
-handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
 
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
 # Normally we would attach the handler to the root logger, and this would be unnecessary
-logger.propagate = False
+# logger.propagate = False
 #################logging##################
-
-# default_prismsync_config = {
-    
-# }

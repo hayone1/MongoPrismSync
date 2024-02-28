@@ -18,16 +18,17 @@ def get_full_path(input_path) -> str:
         return full_path
     
 @staticmethod
-def download_and_extract_zip(zip_url, extract_folder):
+def download_and_extract_zip(zip_url, extract_folder) -> bool:
+    '''Download and extract a zip file to specified folder
+    '''
     # Create the extraction folder if it doesn't exist
     os.makedirs(extract_folder, exist_ok=True)
 
     # Download the zip file
     response = requests.get(zip_url)
-    print("StatusCode",response.status_code)
     if response.status_code == 404:
         logger.error(f"No Resource Found at {zip_url}")
-        raise FileNotFoundError(f"No Resource Found at {zip_url}")
+        return False
     zip_file_path = os.path.join(extract_folder, 'downloaded_file.zip')
 
     with open(zip_file_path, 'wb') as zip_file:
@@ -39,3 +40,5 @@ def download_and_extract_zip(zip_url, extract_folder):
 
     # Remove the downloaded zip file
     os.remove(zip_file_path)
+    logger.info(f"Download and Extract Successful: {zip_url} | destination: {extract_folder}")
+    return True
