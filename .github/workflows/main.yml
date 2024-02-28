@@ -1,4 +1,4 @@
-name: Create Release from Latest Subfolder
+name: Release
 
 on:
   push:

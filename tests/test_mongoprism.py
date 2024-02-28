@@ -1,5 +1,5 @@
 from typer.testing import CliRunner
-from mongoprism import __app_name__, __version__, cli
+from mongocd import __app_name__, __version__, cli
 
 runner = CliRunner()
 

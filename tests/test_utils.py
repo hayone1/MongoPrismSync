@@ -1,6 +1,6 @@
 import os
 import pytest
-from mongoprism.core import utils
+from mongocd.core import utils
 
 pytestmark = pytest.mark.skip("all tests still WIP")
 

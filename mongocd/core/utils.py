@@ -3,7 +3,7 @@ import os
 from zipfile import ZipFile
 
 import requests
-from mongoprism import logger
+from mongocd import logger
 
 
 @staticmethod

@@ -5,12 +5,12 @@ import traceback
 import typer
 import yaml
 
-from mongoprism import (
+from mongocd import (
     SUCCESS, ARG_ERROR, DIR_ACCESS_ERROR, READ_CONFIG_ERROR, INVALID_CONFIG_ERROR, EXTRACT_FILE_ERROR
 )
-from mongoprism import logger
-from mongoprism.core.domain import CustomResource, MongoMigration, Constants
-from mongoprism.core import utils
+from mongocd import logger
+from mongocd.core.domain import CustomResource, MongoMigration, Constants
+from mongocd.core import utils
 
 @staticmethod
 def init_app(config_folder_path: str, source_password: str, sanitize_config: bool,

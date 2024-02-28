@@ -2,9 +2,9 @@
 
 from typing import Optional
 import typer
-from mongoprism import SUCCESS, __app_name__, __version__, ERRORS
-from mongoprism import config as prism_config
-from mongoprism import logger
+from mongocd import SUCCESS, __app_name__, __version__, ERRORS
+from mongocd import config as prism_config
+from mongocd import logger
 
 app = typer.Typer()
 

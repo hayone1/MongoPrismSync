@@ -9,9 +9,9 @@ import pathlib
 import re
 import tempfile
 from typing import Self
-from mongoprism.core import utils
+from mongocd.core import utils
 from pydantic import BaseModel
-from mongoprism import logger
+from mongocd import logger
 from pymongo import MongoClient, database
 
 class CreateIndexOptions:
