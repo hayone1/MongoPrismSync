@@ -85,4 +85,4 @@ jobs:
           python -m pip install pipenv
           pipenv install
       - name: Run tests
-        run: pipenv run pytest ${FOLDER_PATH}
+        run: pipenv run pytest $FOLDER_PATH
