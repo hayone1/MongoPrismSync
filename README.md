@@ -15,7 +15,7 @@ mongocd is a simple command line tool that enables you to extract documents from
 It is built loosely around kubernetes and gitops concepts.
 
 <center>
-    <img width="1000%" src="media/example.gif">
+    <img width="80%" src="media/demo.gif">
 </center>
 
 ## Install
@@ -25,5 +25,9 @@ Not Released yet
 
 ### Apply
 
+### ToDO
+Add tests to github actions
+
 ### Ideas
-Final name of the product couls be mongoprism or mongoci or mongocd
+Final name of the product couls be mongocd or mongoci or mongocd
+

@@ -1,6 +1,6 @@
 '''Top-Level packages'''
 
-__app_name__ = "mongoprism"
+__app_name__ = "mongocd"
 __version__ = '0.0.1'
 
 import logging
