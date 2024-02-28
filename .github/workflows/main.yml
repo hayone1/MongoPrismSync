@@ -61,7 +61,7 @@ jobs:
       #     echo "$abbr"
       #     echo "${{ env.abbr }}"
 
-  run-tests:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

@@ -7,7 +7,7 @@
     A tool for generating mongodocuments a code from a source database.
 </p>
 
-[![Release](https://github.com/hayone1/MongoPrismSync/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/hayone1/MongoPrismSync/actions/workflows/main.yml)
+[![Test & Release](https://github.com/hayone1/MongoPrismSync/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/hayone1/MongoPrismSync/actions/workflows/main.yml)
 
 ## Description
 mongocd is a simple command line tool that enables you to extract documents from a source db(eg. Test), apply transformations in a granular and flexible way, then generate code that can ensure a destination db/collection/document is in sync with the transformed data.
