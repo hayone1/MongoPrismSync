@@ -1,18 +1,16 @@
-import argparse
-import asyncio
-import base64
+import asyncio, aiofiles
+import json, yaml, base64
+import os, re, tempfile
+from typing import Self
 from collections import defaultdict
 from dataclasses import dataclass
-import json, yaml
-import os
-import pathlib
-import re
-import tempfile
-from typing import Self
-from mongocd.core import utils
+from mongocd.Core import utils
 from pydantic import BaseModel
 from mongocd import logger
 from pymongo import MongoClient, database
+
+from mongocd.Core.Domain.Base import Constants, CustomResource
+
 
 class CreateIndexOptions:
     ADD = "add"
@@ -75,12 +73,6 @@ class CollectionsConfig(BaseModel):
     skipCollections: list[str] = list()
     properties: list[CollectionProperty] = list()
 
-class Constants:
-    command = "command"
-    document = "document"
-    secret_vars_key = "MONGOSOURCEPASSWORD"
-    config_folder_location_key = "CONFIGFOLDER"
-    config_file_name = "prismconfig.yaml"
 class DatabaseConfig(BaseModel):
     name: str = ""
     skip: bool = False
@@ -147,10 +139,6 @@ class DatabaseConfig(BaseModel):
             logger.debug(f"database: {self.name}, indices: {property.indices}")
         return self
 
-class CustomResource(BaseModel):
-    apiVersion: str = "migration.codejourney.io/v1alpha1"
-    kind: str = "PrismMigration"
-    metadata: dict = dict()
 
 class MongoMigrationSpec(BaseModel):
     secretVars: dict = dict()
@@ -267,16 +255,3 @@ class DatabaseSyncScripts(BaseModel):
     collectionScript: defaultdict[str, list[str]] = defaultdict(list)
     # databasePostScript: list[str] = list()
     # documentScript: list[str] = list() #unused
-
-class TemplatesFiles:
-    getCollectionData = 'get-data.js'
-    functions = 'functions.js'
-    copyIndices = 'copy-indices.js'
-    deepCompareCopy = 'deep-compare-copy.js'
-    duplicateCollection = 'duplicate-collection.js'
-    copyData = 'copy-data.js'
-    backup_suffix = '_cd_backup'
-    init_script = 'init_script.js'
-    main_script = 'main.js'
-    post_script = 'post_script.js'
-    cleanupDuplicateCollection = 'delete-duplicate-collection.js'

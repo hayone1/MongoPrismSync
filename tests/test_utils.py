@@ -1,10 +1,10 @@
 import os
 import pytest
-from mongocd.core import utils
+from mongocd.Core import utils
 
 pytestmark = pytest.mark.skip("all tests still WIP")
 
-@pytest.mark.parametrize("path_name", ["core"])
+@pytest.mark.parametrize("path_name", ["Core"])
 def test_get_full_path(path_name):
     fullPath = utils.get_full_path(path_name)
     print("Fullpath ", fullPath)
