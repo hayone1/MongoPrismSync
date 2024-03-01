@@ -50,20 +50,20 @@ body:
     validations:
       required: false
   # Labels (optional)
-  - type: checkboxes
-    id: labels
-    attributes:
-      label: Labels (optional)
-      description: Select relevant labels to categorize the story.
-      options:
-        - label: Bug
-          required: false
-        - label: Feature
-          required: false
-        - label: Enhancement
-          required: false
-        - label: Epic
-          required: false
+  # - type: checkboxes
+  #   id: labels
+  #   attributes:
+  #     label: Labels (optional)
+  #     description: Select relevant labels to categorize the story.
+  #     options:
+  #       - label: Bug
+  #         required: false
+  #       - label: Feature
+  #         required: false
+  #       - label: Enhancement
+  #         required: false
+  #       - label: Epic
+  #         required: false
   - type: dropdown
     id: priority
     attributes:
