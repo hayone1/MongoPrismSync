@@ -19,3 +19,13 @@ body:
       value: "user"
     validations:
       required: true
+  # I want (desired outcome)
+  - type: textarea
+    id: outcome
+    attributes:
+      label: I want...
+      description: Describe the desired outcome the user wants to achieve.
+      placeholder: Tell us what you want to see happen.
+      value: "to be notified if my mongocd yaml is wrong"
+    validations:
+      required: true
