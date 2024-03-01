@@ -1,8 +1,7 @@
-name: Stories
-description: File a bug report
-title: "[Bug]: "
-labels: ["bug", "triage"]
-# projects: ["octo-org/1", "octo-org/44"]
+name: User stories
+description: Create user stories that will make up features of the app.
+title: "[User-Story]: "
+labels: ["user-story", "feature"]
 assignees:
   - octocat
 body:
@@ -17,6 +16,7 @@ body:
       label: As a...
       description: Describe the user role impacted by this story.
       placeholder: Tell us what your role is.
+      value: "A bug happened!"
     validations:
       required: true
 
@@ -27,6 +27,7 @@ body:
       label: I want...
       description: Describe the desired outcome the user wants to achieve.
       placeholder: Tell us what you want to see happen.
+      value: "A bug happened!"
     validations:
       required: true
 
@@ -37,6 +38,7 @@ body:
       label: So that...
       description: Explain the benefit or value of achieving the desired outcome.
       placeholder: Tell us the benefitial outcome.
+      value: "A bug happened!"
     validations:
       required: true
 
@@ -47,6 +49,7 @@ body:
       label: Acceptance criteria (optional)
       description: List specific conditions that define a successful implementation.
       placeholder: Clear, measurable, and verifiable criteria.
+      value: "A bug happened!"
     validations:
       required: false
 
@@ -58,15 +61,15 @@ body:
       description: Select relevant labels to categorize the story.
       options:
         - label: Bug
-          required: true
+          required: false
         - label: Feature
-          required: true
+          required: false
         - label: Enhancement
-          required: true
+          required: false
         - label: Story
           required: true
         - label: Epic
-          required: true
+          required: false
     
   - type: dropdown
     id: version
@@ -78,6 +81,7 @@ body:
         - Medium
         - High
         - Critical
+      default: 0
 
   - type: dropdown
     id: version
@@ -87,4 +91,5 @@ body:
       options:
         - 0.0.1 (Latest)
         - 0.0.0 (Others)
-        
+      default: 0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
