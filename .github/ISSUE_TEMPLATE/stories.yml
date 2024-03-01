@@ -29,3 +29,13 @@ body:
       value: "to be notified if my mongocd yaml is wrong"
     validations:
       required: true
+  # So that (benefit)
+  - type: textarea
+    id: benefit
+    attributes:
+      label: So that...
+      description: Explain the benefit or value of achieving the desired outcome.
+      placeholder: Tell us the benefitial outcome.
+      value: "so that I don't get unexpected errors when I try to weave"
+    validations:
+      required: true
