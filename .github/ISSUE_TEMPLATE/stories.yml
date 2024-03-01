@@ -77,3 +77,14 @@ body:
       default: 0
     validations:
       required: false
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of the app are you currenntly running?
+      options:
+        - 0.0.1 (Latest)
+        - 0.0.0 (Others)
+      default: 0
+    validations:
+      required: false
