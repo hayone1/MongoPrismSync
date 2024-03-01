@@ -39,3 +39,13 @@ body:
       value: "so that I don't get unexpected errors when I try to weave"
     validations:
       required: true
+  # Acceptance criteria (optional)
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria (optional)
+      description: List specific conditions that define a successful implementation.
+      placeholder: Clear, measurable, and verifiable criteria.
+      value: "The app should prompt me to run the init command before proceeding"
+    validations:
+      required: false
