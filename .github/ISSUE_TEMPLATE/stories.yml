@@ -49,3 +49,20 @@ body:
       value: "The app should prompt me to run the init command before proceeding"
     validations:
       required: false
+  # Labels (optional)
+  - type: checkboxes
+    id: labels
+    attributes:
+      label: Labels (optional)
+      description: Select relevant labels to categorize the story.
+      options:
+        - label: Bug
+          required: false
+        - label: Feature
+          required: false
+        - label: Enhancement
+          required: false
+        - label: Story
+          required: true
+        - label: Epic
+          required: false
