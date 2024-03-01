@@ -2,7 +2,8 @@ name: User stories
 description: Create user stries that will make up features of the app.
 title: "[User-Story]: "
 labels: ["user-story", "feature"]
-
+assignees:
+  - octocat
 body:
   - type: markdown
     attributes:
