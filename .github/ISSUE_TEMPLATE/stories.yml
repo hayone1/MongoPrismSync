@@ -16,7 +16,7 @@ body:
       label: As a...
       description: Describe the user role impacted by this story.
       placeholder: Tell us what your role is.
-      value: "A bug happened!"
+      value: "user"
     validations:
       required: true
 
@@ -27,7 +27,7 @@ body:
       label: I want...
       description: Describe the desired outcome the user wants to achieve.
       placeholder: Tell us what you want to see happen.
-      value: "A bug happened!"
+      value: "to be notified if my mongocd yaml is wrong"
     validations:
       required: true
 
@@ -38,7 +38,7 @@ body:
       label: So that...
       description: Explain the benefit or value of achieving the desired outcome.
       placeholder: Tell us the benefitial outcome.
-      value: "A bug happened!"
+      value: "so that I don't get unexpected errors when I try to weave"
     validations:
       required: true
 
@@ -49,7 +49,7 @@ body:
       label: Acceptance criteria (optional)
       description: List specific conditions that define a successful implementation.
       placeholder: Clear, measurable, and verifiable criteria.
-      value: "A bug happened!"
+      value: "The app should prompt me to run the init command before proceeding"
     validations:
       required: false
 
@@ -82,6 +82,8 @@ body:
         - High
         - Critical
       default: 0
+    validations:
+      required: false
 
   - type: dropdown
     id: version
@@ -89,6 +91,8 @@ body:
       label: Version
       description: What version of the app are you currenntly running?
       options:
-        - 0.0.1 (Latest.)
+        - 0.0.1 (Lates.)
         - 0.0.0 (Others)
       default: 0
+    validations:
+      required: false
