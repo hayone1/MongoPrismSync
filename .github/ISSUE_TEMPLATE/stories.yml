@@ -62,7 +62,18 @@ body:
           required: false
         - label: Enhancement
           required: false
-        - label: Story
-          required: true
         - label: Epic
           required: false
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority (optional)
+      description: Select the story's urgency based on its impact.
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+      default: 0
+    validations:
+      required: false
