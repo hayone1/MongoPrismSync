@@ -8,6 +8,10 @@ from mongocd import logger
 
 @staticmethod
 def get_full_path(input_path) -> str:
+    '''Get the absolute path of a given path
+
+    Path will remain unchanged if already absolute
+    '''
     # If the input path is absolute, return it unchanged
     if os.path.isabs(input_path):
         return input_path

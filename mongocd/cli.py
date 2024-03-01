@@ -1,11 +1,13 @@
 '''This module provides the cli'''
 
 from typing import Optional
+from kink import inject
 import typer
-from mongocd.Core.Domain.Exceptions import SUCCESS, ERRORS
+from mongocd.Domain.Exceptions import SUCCESS, ERRORS
 from mongocd import __app_name__, __version__
-from mongocd import config as prism_config
+from mongocd.Core import config as prism_config
 from mongocd import logger
+from mongocd.Services.Interfaces import *
 
 app = typer.Typer()
 
@@ -53,6 +55,16 @@ def init(
     logger.info("Starting: MongoPrism Init")
     if prism_config.init_app(config_folder_path, source_password, sanitize_config, init_template, template_url) != SUCCESS:
         raise typer.Exit(1)
+
+@inject    
+@app.command()
+def weave(
+    #Database verification
+    verifyService: IVerifyService,
+    mongoMigration: MongoMigration
+):
+    verifyService.VerifyConnectivity(mongoMigration)
+    
     
 @app.callback()
 def main(

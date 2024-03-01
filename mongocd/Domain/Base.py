@@ -18,9 +18,10 @@ from pymongo import MongoClient, database
 class Constants:
     command = "command"
     document = "document"
-    secret_vars_key = "MONGOSOURCEPASSWORD"
+    mongo_source_pass = "MONGOSOURCEPASSWORD"
     config_folder_location_key = "CONFIGFOLDER"
     config_file_name = "prismconfig.yaml"
+    sanitize_config = "SANITIZE_CONFIG"
 
 class CustomResource(BaseModel):
     apiVersion: str = "migration.codejourney.io/v1alpha1"

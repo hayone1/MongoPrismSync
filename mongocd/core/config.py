@@ -4,12 +4,12 @@ from pathlib import Path
 import traceback
 import yaml
 
-from mongocd.Core.Domain.Exceptions import (
+from mongocd.Domain.Exceptions import (
     SUCCESS, ARG_ERROR, DIR_ACCESS_ERROR, READ_CONFIG_ERROR, INVALID_CONFIG_ERROR, EXTRACT_FILE_ERROR
 )
 from mongocd import logger
-from mongocd.Core.Domain.Base import CustomResource, Constants
-from mongocd.Core.Domain.Database import MongoMigration
+from mongocd.Domain.Base import CustomResource, Constants
+from mongocd.Domain.Database import MongoMigration
 from mongocd.Core import utils
 
 @staticmethod
@@ -28,7 +28,7 @@ def init_app(config_folder_path: str, source_password: str, sanitize_config: boo
                                     config_folder_path + "/templates")
         if extract_successful == False:
             return EXTRACT_FILE_ERROR
-    os.environ[Constants.secret_vars_key] = source_password
+    os.environ[Constants.mongo_source_pass] = source_password
     logger.info("Initialization Successful")
     return SUCCESS
 

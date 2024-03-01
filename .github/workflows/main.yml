@@ -11,7 +11,7 @@ env:
     TESTS_PATH: tests
     LATEST_TAG: v0.0.1
     # LATEST_VERSION: v1alpha1
-    RELEASE_README: RELEASE.md
+    RELEASE_README: docs/RELEASE.md
 jobs:
   create-release:
     runs-on: ubuntu-latest

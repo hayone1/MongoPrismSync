@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from mongocd import logger
 from pymongo import MongoClient, database
 
-from mongocd.Core.Domain.Base import Constants, CustomResource
+from mongocd.Domain.Base import Constants, CustomResource
 
 
 class CreateIndexOptions:
