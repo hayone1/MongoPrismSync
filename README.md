@@ -4,7 +4,7 @@
     <br>
         <img width="50%" src="docs/logo.svg">
 	<br>
-    A tool for generating mongodocuments a code from a source database.
+    gitops style source to destination data management for mongodb.
 </p>
 
 [![Test & Release](https://github.com/hayone1/MongoPrismSync/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/hayone1/MongoPrismSync/actions/workflows/main.yml)
