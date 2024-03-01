@@ -1,89 +1,70 @@
-name: User stories
-description: Create user stries that will make up features of the app.
-title: "[User-Story]: "
-labels: ["user-story", "feature"]
+name: Stories
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug", "triage"]
+# projects: ["octo-org/1", "octo-org/44"]
 assignees:
   - octocat
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this user story!
-  # As a (user role)
-  - type: textarea
-    id: user-role
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: contact
     attributes:
-      label: As a...
-      description: Describe the user role impacted by this story.
-      placeholder: Tell us what your role is.
-    validations:
-      required: true
-
-  # I want (desired outcome)
-  - type: textarea
-    id: outcome
-    attributes:
-      label: I want...
-      description: Describe the desired outcome the user wants to achieve.
-      placeholder: Tell us what you want to see happen.
-    validations:
-      required: true
-
-  # So that (benefit)
-  - type: textarea
-    id: benefit
-    attributes:
-      label: So that...
-      description: Explain the benefit or value of achieving the desired outcome.
-      placeholder: Tell us the benefitial outcome.
-    validations:
-      required: true
-
-  # Acceptance criteria (optional)
-  - type: textarea
-    id: criteria
-    attributes:
-      label: Acceptance criteria (optional)
-      description: List specific conditions that define a successful implementation.
-      placeholder: Clear, measurable, and verifiable criteria.
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
     validations:
       required: false
-
-  # Labels (optional)
-  - type: checkboxes
-    id: labels
+  - type: textarea
+    id: what-happened
     attributes:
-      label: Labels (optional)
-      description: Select relevant labels to categorize the story.
-      options:
-        - label: Bug
-          required: true
-        - label: Feature
-          required: true
-        - label: Enhancement
-          required: true
-        - label: Story
-          required: true
-        - label: Epic
-          required: true
-    
-  - type: dropdown
-    id: version
-    attributes:
-      label: Priority (optional)
-      description: Select the story's urgency based on its impact.
-      options:
-        - Low
-        - Medium
-        - High
-        - Critical
-
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
   - type: dropdown
     id: version
     attributes:
       label: Version
-      description: What version of the app are you currenntly running?
+      description: What version of our software are you running?
       options:
         - 0.0.1 (Latest)
         - 0.0.0 (Others)
-        
+      default: 0
+    validations:
+      required: true
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: What operating system and architecture did you use.
+      multiple: true
+      options:
+        - Windows_x86
+        - Windows_x86_64
+        - macOS_x86_64
+        - macOS_arm64
+        - Linux_x86
+        - Linux_x86_64
+        - Linux_arm
+        - Linux_arm64
+        - Linux_ppc64le
+        - Linux_s390x
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
