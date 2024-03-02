@@ -63,10 +63,10 @@ body:
     validations:
       required: false
   - type: dropdown
-    id: priority
+    id: impact
     attributes:
-      label: Priority (optional)
-      description: Select the story's urgency based on its impact.
+      label: Impact (optional)
+      description: What level of impact do you feel this has on the tool's usability or functionality?
       options:
         - Low
         - Medium
