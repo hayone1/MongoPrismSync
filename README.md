@@ -15,7 +15,8 @@
 - [Installation](#installation)
 - [Usage](#usage)
 - [Examples](#examples)
-- [Defaults](#presets)
+- [Defaults](#defaults)
+- [Case in point](#caseinpoint)
 - [License](#license)
 
 ## Description
@@ -41,6 +42,23 @@ It is built loosely around kubernetes and gitops concepts.
 - Integrates with Existing Tools 🛠️
     - Uses and integrates with python and mongosh.
 
+
+## Installation
+- WIP
+
+## Usage
+WIP
+
+### Weave
+- WIP
+### Apply
+- WIP
+
+## Examples
+- WIP
+
+## Defaults
+WIP
 
 ## Case in point
 You have a new pre-prod environment you just setup up. Perhaps it runs on linux machines or a shiny kubernetes flavour.
@@ -72,24 +90,11 @@ Mongocd aims to contribute and integrate to the various database devops and rele
 - You shouldn't manage massive data (eg. userinfo, session info, passwords etc...) in your repo. That's what the database is for. Rather you should manage things like schema definition and configuration related data; Things that will generally persist among environments or only need minimal data transformation across.
 - If you manually change the data in the repo, mongocd will not know and the next time it is run, it will overwrite your manual changes. Hence any manual changes done to the data should be "translated" into the `WeaveConfig` in a way that can product the same outcome. That will prevent conflict and the need for constant manual interventions.
 
-
-## Installation
-- WIP
-
-## Usage
-WIP
-
-### Weave
-- WIP
-### Apply
-- WIP
-
-## Defaults
-WIP
-
 ## TODO
 
 
 ### Ideas
 Final name of the product couls be mongocd or mongoci or mongocd
 
+## License
+- WIP

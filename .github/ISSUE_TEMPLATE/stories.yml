@@ -11,32 +11,21 @@ body:
         Thanks for taking the time to fill out this user story!
   # As a (user role)
   - type: textarea
-    id: user-role
+    id: story
     attributes:
       label: As a...
-      description: Describe the user role impacted by this story.
-      placeholder: Tell us what your role is.
-      value: "user"
-    validations:
-      required: true
-  # I want (desired outcome)
-  - type: textarea
-    id: outcome
-    attributes:
-      label: I want...
-      description: Describe the desired outcome the user wants to achieve.
-      placeholder: Tell us what you want to see happen.
-      value: "to be notified if my mongocd yaml is wrong"
-    validations:
-      required: true
-  # So that (benefit)
-  - type: textarea
-    id: benefit
-    attributes:
-      label: So that...
-      description: Explain the benefit or value of achieving the desired outcome.
-      placeholder: Tell us the benefitial outcome.
-      value: "so that I don't get unexpected errors when I try to weave"
+      description: |
+        Describe the user role impacted by this story, 
+        the desired outcome the user wants to achieve
+        and the benefit or value of achieving the desired outcome.
+      placeholder: |
+        **As a** mongocd user
+        **I need** to be able to initialize/scaffold my mongocd workspace.
+        **So that** I have a template that I can easily work with.
+      value: |
+        **As a** [role]
+        **I need** [benefit]
+        **So that** [end result]
     validations:
       required: true
   # Acceptance criteria (optional)
@@ -45,25 +34,34 @@ body:
     attributes:
       label: Acceptance criteria (optional)
       description: List specific conditions that define a successful implementation.
-      placeholder: Clear, measurable, and verifiable criteria.
-      value: "The app should prompt me to run the init command before proceeding"
+      placeholder: |
+        ```gherkin
+        Given I have the mongocd tool
+        When I run the init command
+        Then I should have a directory with basic and valid configurations.
+        ```
+      value: |
+        ```gherkin
+        Given [some context]
+        When [certain action is taken]
+        Then [the outcome of action is observed]
+        ```
     validations:
       required: false
-  # Labels (optional)
-  # - type: checkboxes
-  #   id: labels
-  #   attributes:
-  #     label: Labels (optional)
-  #     description: Select relevant labels to categorize the story.
-  #     options:
-  #       - label: Bug
-  #         required: false
-  #       - label: Feature
-  #         required: false
-  #       - label: Enhancement
-  #         required: false
-  #       - label: Epic
-  #         required: false
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Assumptions and Requirements (optional)
+      description: List specific technical requirements or behaviours that can guide the implementation details.
+      placeholder: |
+        * The app is able to list the available commands and sub commands with the `--help` parameter.
+        * If a wrong command or subcommand is used, the app should indicate this and show the parent or base command help menu.
+        * If a wrong parameter is used, the app should indicate this and show the corresponding command's help menu.
+      value: |
+        * [document your assumptions]
+        * [document what should happen]
+    validations:
+      required: false
   - type: dropdown
     id: priority
     attributes:
