@@ -16,5 +16,6 @@ def test_get_full_path(path_name):
 def test_download_and_extract_zip(zip_url):
     folder = utils.get_full_path("tests/debug/outputs/templates")
     print("Fullpath ", folder)
-    utils.download_and_extract_zip(zip_url, folder)
+    success_result = utils.download_and_extract_zip(zip_url, folder)
+    assert success_result == True
     assert len(os.listdir(folder)) > 0

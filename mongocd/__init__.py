@@ -36,19 +36,21 @@ def init_logger() -> Logger:
     logger = logging.getLogger(__name__)
     return logger
 
-def validate_workingdir(config_folder_path: str, source_password: str,  logger: Logger) -> ReturnCodes | MongoMigration:
+def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCodes | MongoMigration:
     '''Validate that working directory has the minimum capabilities
     for a successful weave.'''
     logger.info(Messages.dir_validation)
-    if (config_folder_path is None or source_password is None):
-        logger.warning(f"""{ReturnCodes.UNINITIALIZED.name}: Required Parameters not initialized. {Messages.run_init}""")
-        return ReturnCodes.UNINITIALIZED
-    
+
+    if not os.path.exists(config_folder_path):
+        logger.warning(f"{ReturnCodes.DIR_ACCESS_ERROR.name}: working {Messages.folder_inaccessible}: {config_folder_path}.")
+        return ReturnCodes.DIR_ACCESS_ERROR
+
     #confirm that the folder has all the necessary files
     config_folder_contents = os.listdir(config_folder_path)
     for file_location in (FileStructure):
-        if not os.path.exists(f"{config_folder_path}/{file_location.value}"):
-            logger.warning(f"{ReturnCodes.UNINITIALIZED.name}: file missing from working dir: {file_location.value}. {Messages.run_init}")
+        full_path = f"{config_folder_path}{os.sep}{file_location.value}"
+        if not os.path.exists(full_path):
+            logger.warning(f"{ReturnCodes.UNINITIALIZED.name}: file missing from working dir: {full_path}. {Messages.run_init}")
             return ReturnCodes.UNINITIALIZED
     
     config_file_path = os.path.join(config_folder_path, FileStructure.CONFIGFILE.value)
@@ -72,31 +74,39 @@ def validate_workingdir(config_folder_path: str, source_password: str,  logger: 
 def Main() -> None:
     logger = init_logger()
     di[Logger] = lambda x: logger
-    CONFIG_FOLER_PATH = os.getenv(Constants.config_folder_location_key)
+    CONFIG_FOLER_PATH = utils.get_full_path(
+        os.getenv(Constants.config_folder_location_key, "MongoMigrate"))
     SOURCE_PASSWORD = os.getenv(Constants.mongo_source_pass)
 
+    #need to deal with persisting SOURCE_PASSWORD
+    if (CONFIG_FOLER_PATH is None or SOURCE_PASSWORD is None):
+        logger.warning(f"""{ReturnCodes.UNINITIALIZED.name}: Required environment variables CONFIG_FOLER_PATH or SOURCE_PASSWORD is not set. {Messages.run_init}""")
     #Dependency Injection
     try:
-        config_file_path = validate_workingdir(CONFIG_FOLER_PATH, SOURCE_PASSWORD, logger)
-        #if validation was unsucessful
-        if isinstance(config_file_path, ReturnCodes):
-            di[MongoMigration] = None
-            di["clients"] = None
-            di[IVerifyService] = None
-        else:
+        config_file_path = validate_workingdir(CONFIG_FOLER_PATH, di[Logger])
+
+        #start out as null
+        mongoMigration: MongoMigration = None
+        clients: dict[str, DbClients] = None
+        verifyService: IVerifyService = None
         
+        #if validation was unsucessful
+        if not isinstance(config_file_path, ReturnCodes):
             mongoMigration = MongoMigration().Init(config_file_path)
 
-            clients: dict[str, DbClients] = dict()
             for _databaseConfig in mongoMigration.spec.databaseConfig:
+                required_args = [mongoMigration.spec.source_conn_string, SOURCE_PASSWORD, _databaseConfig.source_authdb,_databaseConfig.source_db]
+
+                #if any of the required parameters to form the clients are not present then dont form the clients
+                if None in required_args or '' in required_args:
+                    continue
                 clients[_databaseConfig.name] = DbClients(
-                    mongoMigration.spec.source_conn_string, password=SOURCE_PASSWORD, 
+                    source_conn_string=mongoMigration.spec.source_conn_string, source_password=SOURCE_PASSWORD, 
                     authSource=_databaseConfig.source_authdb, source_db=_databaseConfig.source_db)
                 
             di[MongoMigration] = lambda x: mongoMigration
             di["clients"] = lambda x: clients
-
-            di[IVerifyService] = VerifyService()
+            di[IVerifyService] = lambda x: verifyService
             # print("ok")
 
     except OSError as ex:

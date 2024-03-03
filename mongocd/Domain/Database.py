@@ -162,6 +162,7 @@ class MongoMigration(CustomResource):
         with open(config_file_path, 'r') as file:
             yaml_data: dict = yaml.safe_load(file)
             self = MongoMigration(**yaml_data)
+            return self
 
 @dataclass
 class DbClients:

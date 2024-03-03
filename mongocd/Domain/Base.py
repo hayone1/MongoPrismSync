@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+import os
 from typing import Self
 from pydantic import BaseModel
 
@@ -20,6 +21,7 @@ class Messages:
     write_file = "Writing file"
     extract_file = "Extracting file"
     remove_file = "Removing file"
+    folder_inaccessible = "folder not found or inaccessible"
 
 class Constants:
     command = "command"
@@ -27,8 +29,9 @@ class Constants:
     mongo_source_pass = "MONGOSOURCEPASSWORD"
     config_folder_location_key = "CONFIGFOLDER"
     sanitize_config = "SANITIZE_CONFIG"
-    metafolder = ".mongocd"
-    templatesfolder = ".mongocd/templates"
+    backup_suffix = "_cd_backup"
+    main_script = 'main.js'
+    post_script = 'post_script.js'
 
 class CustomResource(BaseModel):
     apiVersion: str = "migration.codejourney.io/v1alpha1"
@@ -36,18 +39,24 @@ class CustomResource(BaseModel):
     metadata: dict = dict()
 
 class FileStructure(Enum):
+
+    def conform_path(input_path: str):
+        '''Ensure the path is os compliant'''
+        converted_path = os.path.join(*input_path.split("\\"))
+        return os.path.normpath(converted_path)
+    
+    METAFOLDER = ".mongocd"
+    TEMPLATESFOLDER = conform_path(f"{METAFOLDER}/templates")
     CONFIGFILE = 'prismconfig.yml'
-    GETCOLLECTIONDATA = f'{Constants.templatesfolder}/get-data.js'
-    FUNCTIONS = f'{Constants.templatesfolder}/functions.js'
-    COPYINDICES = f'{Constants.templatesfolder}/copy-indices.js'
-    DEEPCOMPARECOPY = f'{Constants.templatesfolder}/deep-compare-copy.js'
-    DUPLICATECOLLECTION = f'{Constants.templatesfolder}/duplicate-collection.js'
-    COPYDATA = f'{Constants.templatesfolder}/copy-data.js'
-    BACKUP_SUFFIX = f'{Constants.templatesfolder}/_cd_backup'
-    INIT_SCRIPT = f'{Constants.templatesfolder}/init_script.js'
-    MAIN_SCRIPT = f'{Constants.templatesfolder}/main.js'
-    POST_SCRIPT = f'{Constants.templatesfolder}/post_script.js'
-    CLEANUPDUPLICATECOLLECTION = f'{Constants.templatesfolder}/delete-duplicate-collection.js'
+    GETCOLLECTIONDATA = conform_path(f'{TEMPLATESFOLDER}/get-data.js')
+    FUNCTIONS = conform_path(f'{TEMPLATESFOLDER}/functions.js')
+    COPYINDICES = conform_path(f'{TEMPLATESFOLDER}/copy-indices.js')
+    DEEPCOMPARECOPY = conform_path(f'{TEMPLATESFOLDER}/deep-compare-copy.js')
+    DUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/duplicate-collection.js')
+    COPYDATA = conform_path(f'{TEMPLATESFOLDER}/copy-data.js')
+    # INIT_SCRIPT = conform_path(f'{TEMPLATESFOLDER}/init_script.js')
+    CLEANUPDUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/delete-duplicate-collection.js')
+
 
 
 

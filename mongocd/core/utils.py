@@ -1,13 +1,21 @@
 
 from logging import Logger
 import os
+from pathlib import Path
 import traceback
 from zipfile import ZipFile
 from kink import inject
+from requests.exceptions import *
+
 
 import requests
 from mongocd.Domain.Base import Messages, ReturnCodes
 
+# @staticmethod
+# def conform_path(input_path: str):
+#     '''Ensure the path is os compliant'''
+#     converted_path = os.path.join(*input_path.split("\\"))
+#     return os.path.normpath(converted_path)
 
 @staticmethod
 def get_full_path(input_path) -> str:
@@ -15,6 +23,9 @@ def get_full_path(input_path) -> str:
 
     Path will remain unchanged if already absolute
     '''
+    #convert the path into a format compliant with the underlying os
+    input_path = os.path.join(*input_path.split("\\"))
+    input_path = os.path.normpath(input_path)
     # If the input path is absolute, return it unchanged
     if os.path.isabs(input_path):
         return input_path
@@ -35,13 +46,14 @@ def download_and_extract_zip(zip_url: str, extract_folder: str, logger: Logger) 
     os.makedirs(extract_folder, exist_ok=True)
 
     # Download the zip file
-    response = requests.get(zip_url)
-    if response.status_code == 404:
-        logger.error(f"No Resource Found at {zip_url}")
-        return False
-    zip_file_path = os.path.join(extract_folder, 'downloaded_file.zip')
-
     try:
+        response = requests.get(zip_url)
+        if response.status_code == 404:
+            logger.error(f"No Resource Found at {zip_url}")
+            return False
+        zip_file_path = os.path.normpath(
+            os.path.join(extract_folder, 'downloaded_file.zip'))
+
         logger.info(f"Working on file: {zip_file_path}")
         logger.info(Messages.write_file)
         with open(zip_file_path, 'wb') as zip_file:
@@ -55,6 +67,9 @@ def download_and_extract_zip(zip_url: str, extract_folder: str, logger: Logger) 
         # Remove the downloaded zip file
         logger.info(Messages.remove_file)
         os.remove(zip_file_path)
+    except ConnectionError as ex:
+        logger.error(f"Unable to fetch latest templates, please check that you have an active internet connection. {ex}")
+        return False
     except Exception as ex:
         logger.error(f"""{ReturnCodes.UNKNOWN_ERROR.name}: Unknown error occurred while 
                      {Messages.write_file} or {Messages.extract_file} or {Messages.remove_file} | {ex} | {traceback.format_exc()}""")

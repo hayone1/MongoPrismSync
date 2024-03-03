@@ -27,7 +27,7 @@ def init_app(config_folder_path: str, source_password: str, sanitize_config: boo
 
     if update_templates:
         extract_successful =  utils.download_and_extract_zip(prismsync_config.spec.remote_template,
-                                    config_folder_path + "/templates")
+                                    f"{config_folder_path}{os.sep}{FileStructure.TEMPLATESFOLDER.value}")
         if extract_successful == False:
             return EXTRACT_FILE_ERROR
     os.environ[Constants.mongo_source_pass] = source_password
