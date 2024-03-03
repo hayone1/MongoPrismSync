@@ -91,7 +91,8 @@ Mongocd aims to contribute and integrate to the various database devops and rele
 - If you manually change the data in the repo, mongocd will not know and the next time it is run, it will overwrite your manual changes. Hence any manual changes done to the data should be "translated" into the `WeaveConfig` in a way that can product the same outcome. That will prevent conflict and the need for constant manual interventions.
 
 ## TODO
-
+- Weave should check if the current files have been manually edited before proceeding to adjust
+- in debug mode, it should be apparent when a default value is being used for a field
 
 ### Ideas
 Final name of the product couls be mongocd or mongoci or mongocd

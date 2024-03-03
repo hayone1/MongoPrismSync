@@ -1,5 +1,5 @@
 from mongocd.Domain.Database import MongoMigration
-from mongocd.Services.Interfaces import ICollectionService
+from mongocd.Interfaces.Services import ICollectionService
 from mongocd import logger
 
 class CollectionService(ICollectionService):

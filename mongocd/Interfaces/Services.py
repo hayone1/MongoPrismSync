@@ -5,7 +5,8 @@ from mongocd.Domain.Database import *
 class IVerifyService(ABC):
 
     @abstractmethod
-    def VerifyConnectivity(_mongoMigration: MongoMigration) -> bool:
+    def VerifyConnectivity(mongoMigration: MongoMigration) -> bool:
+        '''[Injected]: mongoMigration'''
         pass
 
     @abstractmethod

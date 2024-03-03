@@ -1,21 +1,25 @@
 '''This module provides the cli'''
 
 from typing import Optional
-from kink import inject
+from kink import inject, di
 import typer
 from mongocd.Domain.Exceptions import SUCCESS, ERRORS
 from mongocd import __app_name__, __version__
 from mongocd.Core import config as prism_config
-from mongocd import logger
-from mongocd.Services.Interfaces import *
+from logging import Logger
+from mongocd.Interfaces.Services import *
 
 app = typer.Typer()
+logger = di[Logger]
+mongoMigration = di[MongoMigration]
+verifyService = di[IVerifyService]
 
 def _version_callback(value: bool) -> None:
     if value:
         typer.echo(f"{__app_name__} v{__version__}")
         raise typer.Exit()
     
+@inject
 @app.command()
 def init(
     config_folder_path: Optional[str] = typer.Option(
@@ -36,12 +40,12 @@ def init(
         help="""Weather or not the config yaml should be cleaned up.
         This will remove unnecessary fields"""
     ),
-    init_template: Optional[bool] = typer.Option(
+    update_templates: Optional[bool] = typer.Option(
         True,
-        "--init_template",
+        "--update_templates",
         "-it",
-        help="""Weather or not to initialize the templates.
-        This will overwrite templates with the same name."""
+        help="""Weather or not to download the templates.
+        This will overwrite existing templates with the same name."""
     ),
     template_url: Optional[str] = typer.Option(
         "https://github.com/hayone1/MongoPrismSync/releases/download/v1alpha1_v0.0.1/templates_v1alpha1.zip",
@@ -52,18 +56,20 @@ def init(
     )
 ) -> None:
     '''Initialize the application configurations'''
-    logger.info("Starting: MongoPrism Init")
-    if prism_config.init_app(config_folder_path, source_password, sanitize_config, init_template, template_url) != SUCCESS:
+    logger.info("Starting: mongocd init")
+    if prism_config.init_app(config_folder_path, source_password, sanitize_config, update_templates, template_url) != SUCCESS:
         raise typer.Exit(1)
 
 @inject    
 @app.command()
+# cant use IVerifyService and MongoMigration here as they are meant
+# to be cli argument, use di depedency ijection above
 def weave(
     #Database verification
-    verifyService: IVerifyService,
-    mongoMigration: MongoMigration
 ):
-    verifyService.VerifyConnectivity(mongoMigration)
+    verifyService.VerifyConnectivity()
+    verifyService.VerifyDatabases()
+    #VerifyDatabases
     
     
 @app.callback()

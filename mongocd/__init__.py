@@ -1,6 +1,6 @@
 '''Top-Level packages'''
 
-__app_name__ = "mongoprism"
+__app_name__ = "mongocd"
 __version__ = '0.0.1'
 
 import logging
@@ -11,10 +11,12 @@ from rich.logging import RichHandler
 from logging import Logger
 
 from kink import di
-from distutils.util import strtobool
+import typer
+from mongocd.Domain.Base import *
 
-from mongocd.Services.Interfaces import *
-from mongocd.Services import *
+from mongocd.Interfaces.Services import *
+# from mongocd.Services import *
+from mongocd.Services.VerifyService import VerifyService
 
 # from mongocd.Domain.Database import *
 
@@ -34,48 +36,31 @@ def init_logger() -> Logger:
     logger = logging.getLogger(__name__)
     return logger
 
-def init_config_file(config_folder_path: str, sanitize_config: bool = False, template_url: str = None) -> int | MongoMigration:
-    '''Initialize configuration file'''
-    CONFIG_FOLDER_PATH = os.getenv(Constants.config_folder_location_key, "MongoMigrate")
-    SOURCE_PASSWORD = os.getenv(Constants.mongo_source_pass, "MongoMigrate")
-    SANITIZE_CONFIG = bool(strtobool(os.getenv(Constants.sanitize_config, "true")))
-    # argParser.add_argument("-t", "--testMode", type=lambda x: bool(strtobool(x)), help=f'When set to true, generated manifests will be saved into output folder and not applied to cluster. Default: fa;se')
+def validate_workingdir(config_folder_path: str, source_password: str,  logger: Logger) -> ReturnCodes | MongoMigration:
+    '''Validate that working directory has the minimum capabilities
+    for a successful weave.'''
+    logger.info(Messages.dir_validation)
+    if (config_folder_path is None or source_password is None):
+        logger.warning(f"""{ReturnCodes.UNINITIALIZED.name}: Required Parameters not initialized. {Messages.run_init}""")
+        return ReturnCodes.UNINITIALIZED
+    
+    #confirm that the folder has all the necessary files
+    config_folder_contents = os.listdir(config_folder_path)
+    for file_location in (FileStructure):
+        if not os.path.exists(f"{config_folder_path}/{file_location.value}"):
+            logger.warning(f"{ReturnCodes.UNINITIALIZED.name}: file missing from working dir: {file_location.value}. {Messages.run_init}")
+            return ReturnCodes.UNINITIALIZED
+    
+    config_file_path = os.path.join(config_folder_path, FileStructure.CONFIGFILE.value)
+    return config_file_path
+    #ToDo check if files have been tampered with
 
-    # print("Init config file called")
-    # print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    try:
-        #Create folder
-        config_folder = utils.get_full_path(config_folder_path)
-        os.makedirs(config_folder, exist_ok=True)
-        #Create file
-        config_file_path = os.path.join(config_folder, Constants.config_file_name)
+    # with open(config_file_path, 'r') as file:
+    #     yaml_data: dict = yaml.safe_load(file)
+    #     migration_config_data = MongoMigration(**yaml_data)
+    #     return migration_config_data
+    
         
-        #get or initialize the config file
-        migration_config_data = MongoMigration()
-        migration_config_data.spec.remote_template = (template_url if template_url != None
-                    else migration_config_data.spec.remote_template)
-        if os.path.exists(config_file_path) and os.path.getsize(config_file_path) > 0:
-            with open(config_file_path, 'r') as file:
-                yaml_data: dict = yaml.safe_load(file)
-                migration_config_data = MongoMigration(**yaml_data)
-            if sanitize_config:
-                migration_config_data.spec.remote_template = (template_url if template_url != None
-                    else migration_config_data.spec.remote_template)
-                with open(config_file_path, 'w') as file:
-                    yaml.dump(migration_config_data.model_dump(), file, default_flow_style=False)
-        else:
-            print("Init config file called: Write")
-            #if file is empty or non existent, create a new file
-            with open(config_file_path, 'w') as file:
-                yaml.dump(migration_config_data.model_dump(), file, default_flow_style=False)
-        os.environ[Constants.config_folder_location_key] = config_folder
-        return migration_config_data
-    except OSError as ex:
-        logger.error(f"Error occurred while creating config_folder_path: {config_folder_path} | {ex}")
-        return DIR_ACCESS_ERROR
-    except Exception as ex:
-        logger.fatal(f"Unknown Error occurred while creating or accessing config file: {config_folder_path} | {ex} | {traceback.format_exc()}")
-        return DIR_ACCESS_ERROR
     
 # mongoMigration: MongoMigration = MongoMigration()
 # connectivityRetry = lambda x: mongoMigration.spec.connectivityRetry
@@ -83,7 +68,43 @@ def init_config_file(config_folder_path: str, sanitize_config: bool = False, tem
 # destination_client: MongoClient = MongoClient()
 # clients: dict[str, DbClients] = dict()
 
-def bootstrap_di() -> None:
+# c# like 🙂
+def Main() -> None:
     logger = init_logger()
     di[Logger] = lambda x: logger
-    di[IVerifyService] = VerifyService()
+    CONFIG_FOLER_PATH = os.getenv(Constants.config_folder_location_key)
+    SOURCE_PASSWORD = os.getenv(Constants.mongo_source_pass)
+
+    #Dependency Injection
+    try:
+        config_file_path = validate_workingdir(CONFIG_FOLER_PATH, SOURCE_PASSWORD, logger)
+        #if validation was unsucessful
+        if isinstance(config_file_path, ReturnCodes):
+            di[MongoMigration] = None
+            di["clients"] = None
+            di[IVerifyService] = None
+        else:
+        
+            mongoMigration = MongoMigration().Init(config_file_path)
+
+            clients: dict[str, DbClients] = dict()
+            for _databaseConfig in mongoMigration.spec.databaseConfig:
+                clients[_databaseConfig.name] = DbClients(
+                    mongoMigration.spec.source_conn_string, password=SOURCE_PASSWORD, 
+                    authSource=_databaseConfig.source_authdb, source_db=_databaseConfig.source_db)
+                
+            di[MongoMigration] = lambda x: mongoMigration
+            di["clients"] = lambda x: clients
+
+            di[IVerifyService] = VerifyService()
+            # print("ok")
+
+    except OSError as ex:
+        logger.error(f"{ReturnCodes.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.dir_validation}")
+        raise typer.Exit(ReturnCodes.DIR_ACCESS_ERROR.value)
+    except Exception as ex:
+        logger.fatal(f"{ReturnCodes.UNKNOWN_ERROR.name}: Unknown Error occurred while {Messages.dir_validation}")
+        raise typer.Exit(ReturnCodes.UNKNOWN_ERROR.value)
+    # di[IVerifyService] = VerifyService()
+
+Main()

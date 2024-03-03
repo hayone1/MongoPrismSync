@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 (
     SUCCESS,
     ARG_ERROR,
@@ -6,6 +9,7 @@
     INVALID_CONFIG_ERROR,
     EXTRACT_FILE_ERROR,
 ) = range(6)
+
 
 ERRORS = {
     ARG_ERROR: "Argument parse error",

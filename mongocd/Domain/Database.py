@@ -1,12 +1,13 @@
 import asyncio, aiofiles
+from logging import Logger
 import json, yaml, base64
+from kink import inject
 import os, re, tempfile
 from typing import Self
 from collections import defaultdict
 from dataclasses import dataclass
 from mongocd.Core import utils
 from pydantic import BaseModel
-from mongocd import logger
 from pymongo import MongoClient, database
 
 from mongocd.Domain.Base import Constants, CustomResource
@@ -39,7 +40,8 @@ class CollectionProperty(BaseModel):
     excludeIndices: list[str] = list()
     includeIndices: list[str] = list()
 
-    def SetCollectionIndices(self, db: database.Database) -> Self:
+    @inject
+    def SetCollectionIndices(logger: Logger, self, db: database.Database) -> Self:
         if self.unique_index_key == None or len(self.unique_index_key) < 1:
             logger.warning(f"invalid value for unique_index_key: {self.unique_index_key}, using '_id_' instead")
             self.unique_index_key = "_id_"
@@ -89,7 +91,8 @@ class DatabaseConfig(BaseModel):
     preCollectionCommands: str = "db.runCommand({ ping: 1 });"
     postCollectionCommands: str = "db.runCommand({ ping: 1 });"
 
-    def SetCollectionConfig(self, db: database.Database) -> Self:
+    @inject
+    def SetCollectionConfig(self, logger: Logger, db: database.Database) -> Self:
         # filter = {"name": {"$regex": r"^(?!system\.)"}}
             
         # exclude_filter = {'name': {'$not': {'$in': exclusion_list}}}
@@ -152,35 +155,24 @@ class MongoMigrationSpec(BaseModel):
 class MongoMigration(CustomResource):
     spec: MongoMigrationSpec = MongoMigrationSpec()
 
-    def Init(self: Self, secret_vars_path: str) -> Self:
-        # overwrite secretvars with content of secret_vars file
-        # if secret vars already exists
-        secret_vars_file = utils.get_full_path(secret_vars_path)
-        if os.path.exists(secret_vars_file):
-            with open(secret_vars_file, 'r') as file:
-                secret_data: dict = yaml.safe_load(file)
-                if 'data' in secret_data:
-                    #everything ends up as stringData
-                    for key, value in secret_data['data'].items():
-                        self.spec.secretVars['stringData'] = base64.b64decode(value).decode('utf-8')
-                elif 'stringData' in secret_data:
-                    self.spec.secretVars = secret_data
-                else:
-                    logger.error("Secret definition invalid, cannot find key: data or stringData")
-                    raise Exception("Secret definition invalid, cannot find key: data or stringData")
-        # #overwrite source_conn_string with what is in cmd args
-        # if (args.source_conn_string != ""):
-        #     self.source_conn_string = args.source_conn_string
-        # if (args.destination_conn_string != "*"):
-        #     _mongoMigration.source_conn_string = args.destination_conn_string
-
-        return self
+    #if config is coming from file
+    #didnt use __init__ because i'm not sure if safe_load will 
+    #call __init__ again
+    def Init(self: Self, config_file_path: str) -> Self:
+        with open(config_file_path, 'r') as file:
+            yaml_data: dict = yaml.safe_load(file)
+            self = MongoMigration(**yaml_data)
 
 @dataclass
 class DbClients:
     pyclient: database.Database
     shclient: str
     shclientAsync: list[str]
+
+    def __init__(self, source_conn_string: str, source_password: str, authSource: str, source_db):
+        self.pyclient=MongoClient(source_conn_string, password=source_password, authSource=authSource)[source_db]
+        self.shclient=f'mongosh "{source_conn_string}" --password {source_password} --authenticationDatabase {source_conn_string} --quiet --json=canonical'
+        self.shclientAsync=['mongosh', source_conn_string, '--password', source_password, '--authenticationDatabase', source_conn_string, '--quiet', '--json=canonical']
 
     # def CreateClients(pyclientString: str, shclientString: str, shclientAsyncList: list[str]):
     #     pyclient
