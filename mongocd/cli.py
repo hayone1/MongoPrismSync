@@ -36,14 +36,14 @@ def init(
     sanitize_config: Optional[bool] = typer.Option(
         False,
         "--sanitize_config",
-        "-sc",
+        "-s",
         help="""Weather or not the config yaml should be cleaned up.
         This will remove unnecessary fields"""
     ),
     update_templates: Optional[bool] = typer.Option(
         True,
         "--update_templates",
-        "-it",
+        "-u",
         help="""Weather or not to download the templates.
         This will overwrite existing templates with the same name."""
     ),
@@ -55,7 +55,7 @@ def init(
         effective if config file doesnt exist or sanitize_config is set to true"""
     )
 ) -> None:
-    '''Initialize the application configurations'''
+    '''Initialize the application configurations and verify that the source database is reacheable'''
     logger.info("Starting: mongocd init")
     if prism_config.init_app(config_folder_path, source_password, sanitize_config, update_templates, template_url) != SUCCESS:
         raise typer.Exit(1)

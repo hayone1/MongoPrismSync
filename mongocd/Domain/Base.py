@@ -47,7 +47,7 @@ class FileStructure(Enum):
     
     METAFOLDER = ".mongocd"
     TEMPLATESFOLDER = conform_path(f"{METAFOLDER}/templates")
-    CONFIGFILE = 'prismconfig.yml'
+    CONFIGFILE = 'weaveconfig.yml'
     GETCOLLECTIONDATA = conform_path(f'{TEMPLATESFOLDER}/get-data.js')
     FUNCTIONS = conform_path(f'{TEMPLATESFOLDER}/functions.js')
     COPYINDICES = conform_path(f'{TEMPLATESFOLDER}/copy-indices.js')
