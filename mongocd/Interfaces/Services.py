@@ -5,12 +5,13 @@ from mongocd.Domain.Database import *
 class IVerifyService(ABC):
 
     @abstractmethod
-    def VerifyConnectivity(mongoMigration: MongoMigration) -> bool:
-        '''[Injected]: mongoMigration'''
+    def verify_connectivity(self, source_password: str) -> ReturnCodes:
+        '''Verify Connectivity to the mongodb instance'''
         pass
 
     @abstractmethod
-    def VerifyDatabases(databaseConfig: list[DatabaseConfig]):
+    def verify_databases(self) -> ReturnCodes:
+        '''Verify connectivity to the databases listen in the weaveconfig'''
         pass
 
 class IIndexService:

@@ -8,6 +8,7 @@ from mongocd import __app_name__, __version__
 from mongocd.Core import config as prism_config
 from logging import Logger
 from mongocd.Interfaces.Services import *
+from rich import print
 
 app = typer.Typer()
 logger = di[Logger]
@@ -19,19 +20,13 @@ def _version_callback(value: bool) -> None:
         typer.echo(f"{__app_name__} v{__version__}")
         raise typer.Exit()
     
-@inject
 @app.command()
 def init(
     config_folder_path: Optional[str] = typer.Option(
-        "MongoMigrate",
+        os.getenv(Constants.config_folder_key, "MongoMigrate"),
         "--outputfolder",
         "-o",
         help="The folder to place the config file"
-    ),
-    source_password: Optional[str] = typer.Option(
-        "replace_with_password",
-        "--source_password",
-        "-p"
     ),
     sanitize_config: Optional[bool] = typer.Option(
         False,
@@ -52,23 +47,34 @@ def init(
         "--template_url",
         "-t",
         help="""The url to download the template from. It is only
-        effective if config file doesnt exist or sanitize_config is set to true"""
+        effective if config file doesnt yet exist or sanitize_config is set to true"""
     )
 ) -> None:
     '''Initialize the application configurations and verify that the source database is reacheable'''
     logger.info("Starting: mongocd init")
-    if prism_config.init_app(config_folder_path, source_password, sanitize_config, update_templates, template_url) != SUCCESS:
-        raise typer.Exit(1)
+    if prism_config.init_app(config_folder_path, sanitize_config, update_templates, template_url) != SUCCESS:
+        raise typer.Exit(ReturnCodes.UNINITIALIZED.value)
 
-@inject    
 @app.command()
-# cant use IVerifyService and MongoMigration here as they are meant
-# to be cli argument, use di depedency ijection above
 def weave(
-    #Database verification
+    config_folder_path: Optional[str] = typer.Option(
+        os.getenv(Constants.config_folder_key, None),
+        "--outputfolder",
+        "-o",
+        help="The folder to place the config file"
+    ),
+    source_password: Optional[str] = typer.Option(
+        os.getenv(Constants.mongo_source_pass, None),
+        "--source_password",
+        "-p",
+        help="Password of the source database"
+    )
 ):
-    verifyService.VerifyConnectivity()
-    verifyService.VerifyDatabases()
+    #if any of the verifications did not succeed
+    if any([verifyService.verify_connectivity(source_password).value, 
+        verifyService.verify_databases().value]):
+        raise typer.Exit(ReturnCodes.UNINITIALIZED.value)
+    print("[green] Successfully connected to database")
     #VerifyDatabases
     
     
@@ -78,7 +84,7 @@ def main(
         None,
         "--version",
         "-v",
-        help="Shoe the cli version and exit.",
+        help="Show the cli version and exit.",
         callback=_version_callback,
         is_eager=True
     )

@@ -15,7 +15,7 @@ from mongocd.Core import utils
 
 @staticmethod
 @inject
-def init_app(config_folder_path: str, source_password: str, sanitize_config: bool,
+def init_app(config_folder_path: str, sanitize_config: bool,
             update_templates: bool = True, template_url: str = None, logger: Logger = None) -> int:
     '''Initialize the application defaults and files'''
     # config_folder_path = Path(config_folder_dir)
@@ -30,7 +30,7 @@ def init_app(config_folder_path: str, source_password: str, sanitize_config: boo
                                     f"{config_folder_path}{os.sep}{FileStructure.TEMPLATESFOLDER.value}")
         if extract_successful == False:
             return EXTRACT_FILE_ERROR
-    os.environ[Constants.mongo_source_pass] = source_password
+    # os.environ[Constants.mongo_source_pass] = source_password
     logger.info("Initialization Successful")
     return SUCCESS
 
@@ -66,7 +66,7 @@ def init_config_file(config_folder_path: str, logger: Logger, sanitize_config: b
             #if file is empty or non existent, create a new file
             with open(config_file_path, 'w') as file:
                 yaml.dump(migration_config_data.model_dump(), file, default_flow_style=False)
-        os.environ[Constants.config_folder_location_key] = config_folder
+        os.environ[Constants.config_folder_key] = config_folder
         return migration_config_data
     except OSError as ex:
         logger.error(f"{ReturnCodes.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.write_file}, {config_folder_path} | {ex}")

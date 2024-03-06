@@ -13,6 +13,8 @@ class ReturnCodes(Enum):
     EXTRACT_FILE_ERROR = 5,
     UNINITIALIZED = 6
     UNKNOWN_ERROR = 7
+    ENVVAR_ACCESS_ERROR = 8
+    DB_ACCESS_ERROR = 9
 
 class Messages:
     run_init = f"""Please run mongocd init
@@ -22,12 +24,14 @@ class Messages:
     extract_file = "Extracting file"
     remove_file = "Removing file"
     folder_inaccessible = "folder not found or inaccessible"
+    envvar_inaccessible = "environment variable not found or inaccessible"
+    specvalue_missing = "config spec value is missing or inaccessibe. Could it be a typo?"
 
 class Constants:
     command = "command"
     document = "document"
     mongo_source_pass = "MONGOSOURCEPASSWORD"
-    config_folder_location_key = "CONFIGFOLDER"
+    config_folder_key = "CONFIGFOLDER"
     sanitize_config = "SANITIZE_CONFIG"
     backup_suffix = "_cd_backup"
     main_script = 'main.js'
@@ -35,7 +39,7 @@ class Constants:
 
 class CustomResource(BaseModel):
     apiVersion: str = "migration.codejourney.io/v1alpha1"
-    kind: str = "PrismMigration"
+    kind: str = "WeaveConfig"
     metadata: dict = dict()
 
 class FileStructure(Enum):

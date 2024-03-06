@@ -74,39 +74,48 @@ def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCodes
 def Main() -> None:
     logger = init_logger()
     di[Logger] = lambda x: logger
+
     CONFIG_FOLER_PATH = utils.get_full_path(
-        os.getenv(Constants.config_folder_location_key, "MongoMigrate"))
+        os.getenv(Constants.config_folder_key, "MongoMigrate"))
     SOURCE_PASSWORD = os.getenv(Constants.mongo_source_pass)
 
     #need to deal with persisting SOURCE_PASSWORD
     if (CONFIG_FOLER_PATH is None or SOURCE_PASSWORD is None):
-        logger.warning(f"""{ReturnCodes.UNINITIALIZED.name}: Required environment variables CONFIG_FOLER_PATH or SOURCE_PASSWORD is not set. {Messages.run_init}""")
+        logger.warning(f"""{ReturnCodes.UNINITIALIZED.name}: Required environment variables 
+                       {Constants.config_folder_key} or {Constants.mongo_source_pass} is not set. {Messages.run_init}""")
     #Dependency Injection
     try:
         config_file_path = validate_workingdir(CONFIG_FOLER_PATH, di[Logger])
 
-        #start out as null
+        #start out as null, dependencies need to be injected in this order
         mongoMigration: MongoMigration = None
         clients: dict[str, DbClients] = None
         verifyService: IVerifyService = None
+
+        #using lambda to essentially implement c#'s readonly like get accessor
+        di[MongoMigration] = lambda x: mongoMigration
+        di["clients"] = lambda x: clients
+        di[IVerifyService] = lambda x: verifyService
         
-        #if validation was unsucessful
-        if not isinstance(config_file_path, ReturnCodes):
-            mongoMigration = MongoMigration().Init(config_file_path)
+        #if validation was sucessful, i.e it returned the config_file_path instead of a return code
+        if isinstance(config_file_path, ReturnCodes):
+            return # depeendencies will be Nonee
+        #else
+        mongoMigration = MongoMigration().Init(config_file_path)
 
-            for _databaseConfig in mongoMigration.spec.databaseConfig:
-                required_args = [mongoMigration.spec.source_conn_string, SOURCE_PASSWORD, _databaseConfig.source_authdb,_databaseConfig.source_db]
+        for _databaseConfig in mongoMigration.spec.databaseConfig:
+            required_args = [mongoMigration.spec.source_conn_string, SOURCE_PASSWORD, _databaseConfig.source_authdb,_databaseConfig.source_db]
 
-                #if any of the required parameters to form the clients are not present then dont form the clients
-                if None in required_args or '' in required_args:
-                    continue
-                clients[_databaseConfig.name] = DbClients(
-                    source_conn_string=mongoMigration.spec.source_conn_string, source_password=SOURCE_PASSWORD, 
-                    authSource=_databaseConfig.source_authdb, source_db=_databaseConfig.source_db)
-                
-            di[MongoMigration] = lambda x: mongoMigration
-            di["clients"] = lambda x: clients
-            di[IVerifyService] = lambda x: verifyService
+            #if any of the required parameters to form the clients are not present then dont form the clients
+            if None in required_args or '' in required_args:
+                continue
+            #else
+            clients[_databaseConfig.name] = DbClients(
+                source_conn_string=mongoMigration.spec.source_conn_string, source_password=SOURCE_PASSWORD, 
+                authSource=_databaseConfig.source_authdb, source_db=_databaseConfig.source_db)
+        
+        verifyService = VerifyService()
+            
             # print("ok")
 
     except OSError as ex:

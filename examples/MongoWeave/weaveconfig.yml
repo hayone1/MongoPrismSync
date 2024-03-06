@@ -1,5 +1,5 @@
 apiVersion: migration.codejourney.io/v1alpha1
-kind: PrismMigration
+kind: WeaveConfig
 metadata: {}
 spec:
   connectivityRetry: 5

@@ -4,7 +4,7 @@ from mongocd import logger
 
 class CollectionService(ICollectionService):
 
-    def VerifyConnectivity(_mongoMigration: MongoMigration) -> bool:
+    def verify_connectivity(_mongoMigration: MongoMigration) -> bool:
         if (_mongoMigration.secretVars['stringData'].get('source_password') == None):
             logger.error("unable to find key source_password in secret definition")
             return False
@@ -30,7 +30,7 @@ class CollectionService(ICollectionService):
         logger.info("Successfully connected to source mongodb")
         return True
 
-    def VerifyDatabases(databaseConfig: list[DatabaseConfig]):
+    def verify_databases(databaseConfig: list[DatabaseConfig]):
         logger.info("verify databases connectivity")
         for _databaseConfig in databaseConfig:
             if _databaseConfig.skip == True:

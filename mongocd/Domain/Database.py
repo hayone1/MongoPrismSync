@@ -10,7 +10,7 @@ from mongocd.Core import utils
 from pydantic import BaseModel
 from pymongo import MongoClient, database
 
-from mongocd.Domain.Base import Constants, CustomResource
+from mongocd.Domain.Base import Constants, CustomResource, ReturnCodes
 
 
 class CreateIndexOptions:
@@ -92,29 +92,34 @@ class DatabaseConfig(BaseModel):
     postCollectionCommands: str = "db.runCommand({ ping: 1 });"
 
     @inject
-    def SetCollectionConfig(self, logger: Logger, db: database.Database) -> Self:
+    def SetCollectionConfig(self, logger: Logger, db: database.Database) -> ReturnCodes:
+        
+        # exclude_filter = {'name': {'$not': {'$in': exclusion_list}}} #I wonder why I didnt use this
         # filter = {"name": {"$regex": r"^(?!system\.)"}}
-            
-        # exclude_filter = {'name': {'$not': {'$in': exclusion_list}}}
-        collection_names = db.list_collection_names()
+
+        filter = {"name": {
+            "$regex": r"^(?!system\.)",
+            "$nin": self.collections_config.excludeCollections
+            }
+        }
+        collection_names: list[str]
+        try:
+            collection_names = db.list_collection_names(filter=filter)
+        except Exception as ex:
+            logger.error("Unable to establish database session to fetch collection names")
+            return ReturnCodes.DB_ACCESS_ERROR
         #if user specified includeCollections, then pick only the valid
-        #collections out of what was specified
+        #collections out of what the user specified
         if (len(self.collections_config.includeCollections) > 0):
             collection_names = set(collection_names) & set(self.collections_config.includeCollections)
 
         #remove exclusion collections
-        exclusion_list = [r"^(?!system\.)"] #default
-        exclusion_list.extend(self.collections_config.excludeCollections)
-        exclusion_list = self.collections_config.excludeCollections
-        # exclusion_list.extend([re.compile(pattern) for pattern in self.collections_config.excludeCollections])
-        collection_names = [collection_name for collection_name in collection_names
-                             if not any([re.search(pattern, collection_name) 
-                                for pattern in exclusion_list])]
-        # filtered_collection_names = list()
-        # for collection_name in collection_names:
-        #     exclude = any(re.search(pattern, collection_name) for pattern in exclusion_list)
-        #     if not exclude:
-        #         filtered_collection_names.append(collection_name)
+        # exclusion_list = [r"^(?!system\.)"] #default
+        # exclusion_list.extend(self.collections_config.excludeCollections)
+        # exclusion_list = self.collections_config.excludeCollections
+        # collection_names = [collection_name for collection_name in collection_names
+        #                      if not any([re.search(pattern, collection_name) 
+        #                         for pattern in exclusion_list])]
 
         existing_collection_properties = {prop.name: prop for prop in self.collections_config.properties}
         logger.info(f"database: {self.name} | collections: {collection_names}")
@@ -140,7 +145,7 @@ class DatabaseConfig(BaseModel):
         for property in self.collections_config.properties:
             logger.info(f"database: {self.name}, collection: {property.name}, excludeIndices: {property.excludeIndices}, unique_index_fields: {property.unique_index_fields}")
             logger.debug(f"database: {self.name}, indices: {property.indices}")
-        return self
+        return ReturnCodes.SUCCESS
 
 
 class MongoMigrationSpec(BaseModel):
