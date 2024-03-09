@@ -9,7 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "mongocd",
-            "args": ["weave", "-o", "examples/MongoWeave"]
+            "args": ["weave"]
         }
     ]
 }

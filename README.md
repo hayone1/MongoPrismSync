@@ -47,7 +47,17 @@ It is built loosely around kubernetes and gitops concepts.
 - WIP
 
 ## Usage
-WIP
+**Set Environment Variables**
+``` bash
+export MONGOSOURCEPASSWORD="YourMongoSourcePassword"
+export CONFIGFOLDER="YourMongcdWorkingFolder"
+```
+or
+``` pwsh
+$env:MONGOSOURCEPASSWORD="YourMongoSourcePassword"
+$env:CONFIGFOLDER="YourMongcdWorkingFolder"
+```
+- WIP
 
 ### Weave
 - WIP

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from mongocd.Domain.Database import *
-
+from mongocd.Domain.Base import *
 class IVerifyService(ABC):
 
     @abstractmethod

@@ -30,19 +30,24 @@ class VerifyService(IVerifyService):
         # destination_password = self.mongoMigration.spec.secretVars['destination_password']
 
         self.logger.info("verify mongodb connectivity")
-        for _databaseConfig in self.mongoMigration.spec.databaseConfig[0:]:
-            self.clients[_databaseConfig.name] = DbClients(
-                    pyclient=MongoClient(source_conn_string, password=source_password, authSource=_databaseConfig.source_authdb)[_databaseConfig.source_db],
-                    shclient=f'mongosh "{source_conn_string}" --password {source_password} --authenticationDatabase {_databaseConfig.source_authdb} --quiet --json=canonical',
-                    shclientAsync=['mongosh', source_conn_string, '--password', source_password, '--authenticationDatabase', _databaseConfig.source_authdb, '--quiet', '--json=canonical']) 
-                    # f'mongosh "{source_conn_string}" --password {source_password} --authenticationDatabase {_databaseConfig.source_authdb}')
-            pymongoCheck = self.clients[_databaseConfig.name].pyclient.command('ping')
-            mongoshCheck = self.clients[_databaseConfig.name].ShCommand("db.runCommand({ ping: 1 });")
-            # print(pymongoCheck)
-            # print(mongoshCheck)
-            if (pymongoCheck['ok'] < 1 or mongoshCheck['ok']['$numberInt'] != '1'):
-                self.logger.error(f"{ReturnCodes.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string}, Check that the details are correct and you have network access to the database.")
-                return ReturnCodes.DB_ACCESS_ERROR
+        # errored_database_clients = []
+        # success_database_clients = []
+        for db, client in self.clients.items():
+            try:
+                pymongoCheck = client.pyclient.command('ping')
+                mongoshCheck = client.ShCommand("db.runCommand({ ping: 1 });")
+                # print(pymongoCheck)
+                # print(mongoshCheck)
+                if (pymongoCheck['ok'] < 1 or mongoshCheck['ok']['$numberInt'] != '1'):
+                    self.logger.error(f"""{ReturnCodes.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string} 
+                                      | password: {source_password},
+                                      Check that the details are correct and you have network access to the database.""")
+                    return ReturnCodes.DB_ACCESS_ERROR
+            except Exception as ex:
+                    self.logger.error(f"""{ReturnCodes.DB_ACCESS_ERROR}: Failed connecting to database
+                                      {source_conn_string} | password: {source_password} | {ex}""")
+                    return ReturnCodes.DB_ACCESS_ERROR
+
             # print(f"source: {_databaseConfig.destination_db}", self.clients[_databaseConfig.name].destination_client[_databaseConfig.destination_db].command('ping'))
             
         self.logger.info("Successfully connected to source mongodb")
@@ -67,6 +72,7 @@ class VerifyService(IVerifyService):
             if _databaseConfig.SetCollectionConfig(source_db) != ReturnCodes.SUCCESS:
                 errored_databases.append(_databaseConfig.name)
                 continue
+            success_databases.append(_databaseConfig.name)
             # _databaseConfig.collections_config.properties collection_names
         if len(errored_databases) > 0:
             self.logger.warn(f"databases with connection errors: {errored_databases}")

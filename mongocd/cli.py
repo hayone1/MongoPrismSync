@@ -1,10 +1,10 @@
 '''This module provides the cli'''
 
+import sys
 from typing import Optional
 from kink import inject, di
 import typer
 from mongocd.Domain.Exceptions import SUCCESS, ERRORS
-from mongocd import __app_name__, __version__
 from mongocd.Core import config as prism_config
 from logging import Logger
 from mongocd.Interfaces.Services import *
@@ -15,15 +15,16 @@ logger = di[Logger]
 mongoMigration = di[MongoMigration]
 verifyService = di[IVerifyService]
 
+
 def _version_callback(value: bool) -> None:
     if value:
-        typer.echo(f"{__app_name__} v{__version__}")
+        typer.echo(f"{prism_config.__app_name__} v{prism_config.__version__}")
         raise typer.Exit()
     
 @app.command()
 def init(
     config_folder_path: Optional[str] = typer.Option(
-        os.getenv(Constants.config_folder_key, "MongoMigrate"),
+        os.getenv(Constants.config_folder_key, Constants.default_folder),
         "--outputfolder",
         "-o",
         help="The folder to place the config file"
@@ -52,7 +53,14 @@ def init(
 ) -> None:
     '''Initialize the application configurations and verify that the source database is reacheable'''
     logger.info("Starting: mongocd init")
-    if prism_config.init_app(config_folder_path, sanitize_config, update_templates, template_url) != SUCCESS:
+
+    if config_folder_path == Constants.default_folder:
+        logger.info(f"Using default working folder: {Constants.default_folder}")
+
+    if config_folder_path is None:
+        config_folder_path = typer.prompt("Enter path of working directory: ")
+
+    if prism_config.init_configs(config_folder_path, sanitize_config, update_templates, template_url) != SUCCESS:
         raise typer.Exit(ReturnCodes.UNINITIALIZED.value)
 
 @app.command()
@@ -70,11 +78,42 @@ def weave(
         help="Password of the source database"
     )
 ):
-    #if any of the verifications did not succeed
-    if any([verifyService.verify_connectivity(source_password).value, 
-        verifyService.verify_databases().value]):
+    reload_dependencies = False
+    if os.getenv(Constants.config_folder_key) is None:
+        reload_dependencies = True
+        # print(f"[yellow]Neither {}")
+        #set both config_folder_path and the env variable
+        os.environ[Constants.config_folder_key] = config_folder_path = \
+            (config_folder_path 
+             or typer.prompt("Working dirctory not set. Enter path of working directory"))
+        reload_dependencies = True
+    if os.getenv(Constants.mongo_source_pass) is None:
+        reload_dependencies = True
+        #set both source_password and the env variable
+        source_password = os.environ[Constants.mongo_source_pass] = \
+            (source_password 
+             or typer.prompt("Source password not set. Enter password of source mongodb", hide_input=True))
+
+    #inject dependencies again
+    if reload_dependencies == True:
+        # utils.reload_program(prism_config.__app_name__, app)
+        prism_config.inject_dependencies()
+        global mongoMigration; mongoMigration = di[MongoMigration]
+        global verifyService; verifyService = di[IVerifyService]
+        # weave()
+        # sys.exit()
+
+    if verifyService is None:
         raise typer.Exit(ReturnCodes.UNINITIALIZED.value)
-    print("[green] Successfully connected to database")
+    
+    verify_connectivity = verifyService.verify_connectivity(source_password)
+    if verify_connectivity != ReturnCodes.SUCCESS:
+        raise typer.Exit(ReturnCodes.DB_ACCESS_ERROR.value)
+    
+    verify_database = verifyService.verify_databases()
+    if verify_database != ReturnCodes.SUCCESS:
+        raise typer.Exit(ReturnCodes.DB_ACCESS_ERROR.value)
+    print("[green] Connection to database established Successfully!")
     #VerifyDatabases
     
     

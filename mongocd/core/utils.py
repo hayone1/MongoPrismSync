@@ -1,7 +1,9 @@
 
 from logging import Logger
-import os
+import os, importlib
 from pathlib import Path
+import subprocess
+import sys
 import traceback
 from zipfile import ZipFile
 from kink import di, inject
@@ -9,13 +11,33 @@ from requests.exceptions import *
 
 
 import requests
+from typer import Typer
 from mongocd.Domain.Base import Messages, ReturnCodes
+from mongocd.Core import config
 
 # @staticmethod
 # def conform_path(input_path: str):
 #     '''Ensure the path is os compliant'''
 #     converted_path = os.path.join(*input_path.split("\\"))
 #     return os.path.normpath(converted_path)
+
+@staticmethod
+def reload_program(app_name: str, app: Typer):
+    # Get the arguments passed to the script
+    # args = [sys.executable, "-m", app_name] + sys.argv[1:]
+    # print("Restarting application")
+    # os.execl(sys.executable, sys.executable, args)
+    # module = importlib.import_module(app_name)
+    # importlib.reload(module)
+    # try:
+    #     # Attempt to re-execute the application using the same arguments
+    #     subprocess.run([sys.executable] + sys.argv, check=True)
+    # finally:
+    #     # End current process after the new instance has started
+    #     os._exit(0)
+    config.inject_dependencies()
+    app(prog_name=app_name)
+        
 
 @staticmethod
 def is_empty_or_whitespace(input_string: str):

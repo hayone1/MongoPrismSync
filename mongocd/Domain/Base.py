@@ -36,6 +36,7 @@ class Constants:
     backup_suffix = "_cd_backup"
     main_script = 'main.js'
     post_script = 'post_script.js'
+    default_folder = 'MongoMigrate'
 
 class CustomResource(BaseModel):
     apiVersion: str = "migration.codejourney.io/v1alpha1"

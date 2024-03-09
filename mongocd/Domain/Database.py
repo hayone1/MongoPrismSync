@@ -41,7 +41,7 @@ class CollectionProperty(BaseModel):
     includeIndices: list[str] = list()
 
     @inject
-    def SetCollectionIndices(logger: Logger, self, db: database.Database) -> Self:
+    def SetCollectionIndices(self, db: database.Database, logger: Logger = None) -> Self:
         if self.unique_index_key == None or len(self.unique_index_key) < 1:
             logger.warning(f"invalid value for unique_index_key: {self.unique_index_key}, using '_id_' instead")
             self.unique_index_key = "_id_"
@@ -92,21 +92,20 @@ class DatabaseConfig(BaseModel):
     postCollectionCommands: str = "db.runCommand({ ping: 1 });"
 
     @inject
-    def SetCollectionConfig(self, logger: Logger, db: database.Database) -> ReturnCodes:
+    def SetCollectionConfig(self, db: database.Database, logger: Logger = None) -> ReturnCodes:
         
         # exclude_filter = {'name': {'$not': {'$in': exclusion_list}}} #I wonder why I didnt use this
         # filter = {"name": {"$regex": r"^(?!system\.)"}}
 
-        filter = {"name": {
-            "$regex": r"^(?!system\.)",
-            "$nin": self.collections_config.excludeCollections
-            }
+        filter = {
+            "name": {"$regex": r"^(?!system\.)"}
+            # "name": {"$nin": self.collections_config.excludeCollections}
         }
         collection_names: list[str]
         try:
             collection_names = db.list_collection_names(filter=filter)
         except Exception as ex:
-            logger.error("Unable to establish database session to fetch collection names")
+            logger.error("Unable to establish database session to fetch collection names | {ex}")
             return ReturnCodes.DB_ACCESS_ERROR
         #if user specified includeCollections, then pick only the valid
         #collections out of what the user specified
@@ -116,10 +115,10 @@ class DatabaseConfig(BaseModel):
         #remove exclusion collections
         # exclusion_list = [r"^(?!system\.)"] #default
         # exclusion_list.extend(self.collections_config.excludeCollections)
-        # exclusion_list = self.collections_config.excludeCollections
-        # collection_names = [collection_name for collection_name in collection_names
-        #                      if not any([re.search(pattern, collection_name) 
-        #                         for pattern in exclusion_list])]
+        exclusion_list = self.collections_config.excludeCollections
+        collection_names = [collection_name for collection_name in collection_names
+                             if not any([re.search(pattern, collection_name) 
+                                for pattern in exclusion_list])]
 
         existing_collection_properties = {prop.name: prop for prop in self.collections_config.properties}
         logger.info(f"database: {self.name} | collections: {collection_names}")
@@ -169,29 +168,34 @@ class MongoMigration(CustomResource):
             self = MongoMigration(**yaml_data)
             return self
 
-@dataclass
+# @dataclass
+@inject
 class DbClients:
-    pyclient: database.Database
-    shclient: str
-    shclientAsync: list[str]
+    # pyclient: database.Database
+    # shclient: str
+    # shclientAsync: list[str]
 
-    def __init__(self, source_conn_string: str, source_password: str, authSource: str, source_db):
+    def __init__(self, source_conn_string: str, source_password: str, authSource: str, source_db: str, logger: Logger):
         self.pyclient=MongoClient(source_conn_string, password=source_password, authSource=authSource)[source_db]
-        self.shclient=f'mongosh "{source_conn_string}" --password {source_password} --authenticationDatabase {source_conn_string} --quiet --json=canonical'
+        self.shclient=f'mongosh "{source_conn_string}" --password "{source_password}" --authenticationDatabase "{authSource}" --quiet --json=canonical'
         self.shclientAsync=['mongosh', source_conn_string, '--password', source_password, '--authenticationDatabase', source_conn_string, '--quiet', '--json=canonical']
-
+        self.logger = logger
     # def CreateClients(pyclientString: str, shclientString: str, shclientAsyncList: list[str]):
     #     pyclient
 
     def ShCommand (self, command: str):
         '''
         Runs command using mongosh installed on system
-        remarks: quote commands using double quotes and any internal part
-        of the command with single quotes
+        remarks: quote commands using double quotes and any internal strings
+        in the command with single quotes.
         '''
         # full_command = f' {" ".join(self.shclient)} --quiet --json=canonical --eval "{command}"'
         result = os.popen(f' {self.shclient} --eval "{command}"').read().rstrip()
-        return json.loads(result)
+        try:
+            return json.loads(result)
+        except Exception as ex:
+            self.logger.error(f"Unable to load --eval result. Check your connection string/parameters and connectivity: {self.shclient} | {ex}")
+            return result
     async def ShCommandAsync(self, command: str):
         '''
         Runs command asynchronously using mongosh installed on system
