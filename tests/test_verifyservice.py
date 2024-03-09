@@ -1,7 +1,7 @@
 import os
 import pytest
 from typer.testing import CliRunner
-from mongocd import __app_name__, __version__, cli
+from mongocd import cli
 from mongocd.Domain.Base import Constants, ReturnCodes
 from mongocd.Core import utils
 

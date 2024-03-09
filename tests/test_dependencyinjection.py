@@ -1,7 +1,7 @@
 from logging import Logger
 import pytest
 from typer.testing import CliRunner
-from mongocd import __app_name__, __version__, cli
+from mongocd import cli
 from kink import di
 
 from mongocd.Domain.Database import DbClients, MongoMigration

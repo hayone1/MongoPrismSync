@@ -78,6 +78,7 @@ def weave(
         help="Password of the source database"
     )
 ):
+    '''Pull data from source database and apply transformations based on given configuration'''
     reload_dependencies = False
     if os.getenv(Constants.config_folder_key) is None:
         reload_dependencies = True
@@ -94,7 +95,7 @@ def weave(
             (source_password 
              or typer.prompt("Source password not set. Enter password of source mongodb", hide_input=True))
 
-    #inject dependencies again
+    #refresh dependencies
     if reload_dependencies == True:
         # utils.reload_program(prism_config.__app_name__, app)
         prism_config.inject_dependencies()

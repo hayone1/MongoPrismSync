@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
+import logging
 import os
-from typing import Self
 from pydantic import BaseModel
+
 
 class ReturnCodes(Enum):
     SUCCESS = 0,
@@ -37,6 +38,16 @@ class Constants:
     main_script = 'main.js'
     post_script = 'post_script.js'
     default_folder = 'MongoMigrate'
+    log_level = 'LOG_LEVEL'
+    default_log_level  = 'error'
+
+LOG_LEVEL_MAP = {
+    "debug": logging.DEBUG,
+    "info": logging.INFO,
+    "warning": logging.WARNING,
+    Constants.default_log_level: logging.ERROR,
+    "critical": logging.CRITICAL
+}
 
 class CustomResource(BaseModel):
     apiVersion: str = "migration.codejourney.io/v1alpha1"

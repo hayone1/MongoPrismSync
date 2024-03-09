@@ -49,10 +49,14 @@ class PasswordFilter(logging.Filter):
 #################logging##################
 @staticmethod
 def init_logger() -> Logger:
+    #get log level from environment variable
+    log_level_str = os.environ.get(Constants.log_level, Constants.default_log_level).lower()
+    log_level = LOG_LEVEL_MAP.get(log_level_str)
+
     handler = logging.StreamHandler()  # Or FileHandler or anything else
     # Configure the fields to include in the JSON output. message is the main log string itself
     logging.basicConfig(
-        level=logging.INFO,
+        level=log_level,
         format="%(message)s",
         datefmt="[%X]",
         handlers=[RichHandler(rich_tracebacks=True)]
