@@ -8,45 +8,21 @@ class CollectionService(ICollectionService):
             self.logger = logger
             self.mongoMigration = mongoMigration
             self.clients = clients
+            # self.template_folder = FileStructure.TEMPLATESFOLDER
 
-    def verify_connectivity(self, _mongoMigration: MongoMigration) -> bool:
-        if (_mongoMigration.secretVars['stringData'].get('source_password') == None):
-            self.logger.error("unable to find key source_password in secret definition")
-            return False
-        source_password = _mongoMigration.secretVars['stringData']['source_password']
-        # destination_password = _mongoMigration.secretVars['destination_password']
+    async def GenerateCreateIndexCommandAsync(self, databaseConfig: DatabaseConfig, collection_property: CollectionProperty) -> CollectionCommand:
+        self.logger.debug(f"Creating CreateCollectionIndexCommand Started: {databaseConfig.source_db} | {collection_property.name}")
 
-        self.logger.info("verify mongodb connectivity")
-        for _databaseConfig in _mongoMigration.databaseConfig[0:]:
-            self.clients[_databaseConfig.name] = DbClients(
-                    pyclient=MongoClient(_mongoMigration.source_conn_string, password=source_password, authSource=_databaseConfig.source_authdb)[_databaseConfig.source_db],
-                    shclient=f'mongosh "{_mongoMigration.source_conn_string}" --password {source_password} --authenticationDatabase {_databaseConfig.source_authdb} --quiet --json=canonical',
-                    shclientAsync=['mongosh', _mongoMigration.source_conn_string, '--password', source_password, '--authenticationDatabase', _databaseConfig.source_authdb, '--quiet', '--json=canonical']) 
-                    # f'mongosh "{_mongoMigration.source_conn_string}" --password {source_password} --authenticationDatabase {_databaseConfig.source_authdb}')
-            pymongoCheck = self.clients[_databaseConfig.name].pyclient.command('ping')
-            mongoshCheck = self.clients[_databaseConfig.name].ShCommand("db.runCommand({ ping: 1 });")
-            # print(pymongoCheck)
-            # print(mongoshCheck)
-            if (pymongoCheck['ok'] < 1 or mongoshCheck['ok']['$numberInt'] != '1'):
-                self.logger.error("Connectivity test failed, program cannot continue")
-                return False
-            # print(f"source: {_databaseConfig.destination_db}", self.clients[_databaseConfig.name].destination_client[_databaseConfig.destination_db].command('ping'))
-            
-        self.logger.info("Successfully connected to source mongodb")
-        return True
-
-    def verify_databases(self, databaseConfig: list[DatabaseConfig]):
-        self.logger.info("verify databases connectivity")
-        for _databaseConfig in databaseConfig:
-            if _databaseConfig.skip == True:
-                self.logger.warning(f"[{_databaseConfig.name}]: skip set to true, skipping...")
-                continue
-            source_db = self.clients[_databaseConfig.name].pyclient
-            # destination_db = self.clients[_databaseConfig.name].source_client[_databaseConfig.destination_db]
-            _databaseConfig.SetCollectionConfig(source_db)
-
-            # _databaseConfig.collections_config.properties collection_names
-        self.logger.info("successfully verified databases connectivity")
-        # destination_collections = source_db.list_collection_names(filter=filter)
+        sourceIndices = await self.clients[databaseConfig.name].ShCommandAsync(
+            f'db.getSiblingDB("{databaseConfig.source_db}")["{collection_property.name}"].getIndexes()')
+        
+        async with aiofiles.open(f'{FileStructure.TEMPLATESFOLDER}/{TemplatesFiles.copyIndices}', 'r') as file:
+            self.logger.info(f"Creating CreateCollectionIndexCommand Ended: {databaseConfig.source_db} | {collection_property.name}")
+            result = CollectionCommand(name=collection_property.name, 
+                command=(await file.read()) \
+                    .replace('___dbName___', databaseConfig.destination_db) \
+                    .replace('___collName___', collection_property.name) \
+                    .replace('__sourceIndices__',json.dumps(sourceIndices)))
+            return result
 
 
