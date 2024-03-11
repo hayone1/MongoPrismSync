@@ -15,7 +15,7 @@ from mongocd.Core import utils
 
 import logging
 import multiprocess
-from pymongo import MongoClient
+from pymongo import errors
 from pythonjsonlogger import jsonlogger
 from rich.logging import RichHandler
 from logging import Logger
@@ -95,7 +95,7 @@ def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCodes
     #     return migration_config_data
     
 @staticmethod
-def inject_dependencies() -> None:
+def inject_dependencies() -> ReturnCodes:
     logger = init_logger()
     di[Logger] = lambda x: logger
 
@@ -125,7 +125,8 @@ def inject_dependencies() -> None:
         for _databaseConfig in mongoMigration.spec.databaseConfig:
             required_args = [mongoMigration.spec.source_conn_string, SOURCE_PASSWORD, _databaseConfig.source_authdb,_databaseConfig.source_db]
 
-            #if any of the required parameters to form the clients are not present then dont form the clients
+            #if any of the required parameters to form the clients are not present 
+            #then dont form the clients for this iteration
             if None in required_args or '' in required_args:
                 continue
             #else
@@ -138,11 +139,16 @@ def inject_dependencies() -> None:
             # print("ok")
 
     except OSError as ex:
-        logger.error(f"{ReturnCodes.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.dir_validation}")
-        raise typer.Exit(ReturnCodes.DIR_ACCESS_ERROR.value)
+        logger.fatal(f"{ReturnCodes.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.dir_validation}")
+        return ReturnCodes.DIR_ACCESS_ERROR
+    except errors.ConfigurationError as ex:
+        logger.error(f"{ReturnCodes.TIMEOUT_ERROR}: {Messages.operation_timeout} | {ex}")
+        return ReturnCodes.TIMEOUT_ERROR.value
     except Exception as ex:
-        logger.fatal(f"{ReturnCodes.UNKNOWN_ERROR.name}: Unknown Error occurred while {Messages.dir_validation}")
-        raise typer.Exit(ReturnCodes.UNKNOWN_ERROR.value)
+        logger.fatal(f"{ReturnCodes.UNKNOWN_ERROR.name}: Unknown Error occurred while {Messages.dir_validation} | {ex}")
+        return ReturnCodes.UNKNOWN_ERROR.value
+    
+    return ReturnCodes.SUCCESS
     # di[IVerifyService] = VerifyService()
 
 

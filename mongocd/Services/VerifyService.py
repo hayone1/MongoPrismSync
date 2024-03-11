@@ -19,12 +19,12 @@ class VerifyService(IVerifyService):
         source_conn_string = self.mongoMigration.spec.source_conn_string
 
         if (source_password == None):
-            self.logger.error(f"{Messages.envvar_inaccessible}: {Constants.mongo_source_pass}")
+            self.logger.fatal(f"{ReturnCodes.ENVVAR_ACCESS_ERROR}: {Messages.envvar_inaccessible}: {Constants.mongo_source_pass}")
             return ReturnCodes.ENVVAR_ACCESS_ERROR
         
         if (utils.is_empty_or_whitespace(source_conn_string)):
             #source_conn_string= will print the variable name and value
-            self.logger.error(f"{Messages.specvalue_missing}: {source_conn_string=}")
+            self.logger.fatal(f"{ReturnCodes.READ_CONFIG_ERROR}: {Messages.specvalue_missing}: {source_conn_string=}")
             return ReturnCodes.READ_CONFIG_ERROR
         # source_password = self.mongoMigration.spec.secretVars['stringData']['source_password']
         # destination_password = self.mongoMigration.spec.secretVars['destination_password']

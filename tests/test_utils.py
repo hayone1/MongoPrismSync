@@ -2,7 +2,7 @@ import os
 import pytest
 from mongocd.Core import utils
 
-pytestmark = pytest.mark.skip("all tests still WIP")
+# pytestmark = pytest.mark.skip("all tests still WIP")
 
 @pytest.mark.parametrize("path_name", ["Core"])
 def test_get_full_path(path_name):

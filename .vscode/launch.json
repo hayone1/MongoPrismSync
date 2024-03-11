@@ -9,7 +9,11 @@
             "type": "debugpy",
             "request": "launch",
             "module": "mongocd",
-            "args": ["weave"]
+            "args": ["weave", "-o", "examples/MongoWeave"],
+            "env": {
+                "MONGOSOURCEPASSWORD": "MQMBUD1HEIm3ZWaX",
+                "LOG_LEVEL": "INFO"
+            }
         }
     ]
 }

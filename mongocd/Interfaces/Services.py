@@ -14,18 +14,20 @@ class IVerifyService(ABC):
         '''Verify connectivity to the databases listen in the weaveconfig'''
         pass
 
-class IIndexService:
-    pass
+# class IIndexService:
+#     pass
 
 class ICollectionService:
     @abstractmethod
-    async def CreateCollectionIndexCommandAsync(databaseConfig: DatabaseConfig, collection_property: CollectionProperty) -> CollectionCommand:
+    async def GenerateCreateIndexCommandAsync(databaseConfig: DatabaseConfig, collection_property: CollectionProperty) -> CollectionCommand:
         pass
+
 
     @abstractmethod
     async def GetSourceCollectionsAsync(databaseConfig: DatabaseConfig, commandsList: DatabaseSyncScripts,
                          collection_property: CollectionProperty, get_data_query_template: str, compareCopy_query_template: str):
         pass
+
 
     @abstractmethod
     async def SaveCollectionsCommandsAsync(databaseOutputFolder: str, collectionName: str, collectionScripts: list[DatabaseSyncScripts]):
@@ -33,25 +35,6 @@ class ICollectionService:
 
     @abstractmethod
     async def GenerateSyncScriptsAsync(databaseConfig: DatabaseConfig):
-        pass
-
-    
-    #==========Synchronous methods===============
-    @abstractmethod
-    def CreateCollectionIndexCommand(databaseConfig: DatabaseConfig, collection_property: CollectionProperty) -> CollectionCommand:
-        pass
-
-    @abstractmethod
-    def GetSourceCollections(databaseConfig: DatabaseConfig, commandsList: DatabaseSyncScripts,
-                         collection_property: CollectionProperty, get_data_query_template: str, compareCopy_query_template: str):
-        pass
-
-    @abstractmethod
-    def SaveCollectionsCommands(databaseOutputFolder: str, collectionName: str, collectionScripts: list[DatabaseSyncScripts]):
-        pass
-
-    @abstractmethod
-    def GenerateSyncScripts(databaseConfig: DatabaseConfig):
         pass
 
     

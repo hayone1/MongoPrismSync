@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from mongocd.Core import utils
 from pydantic import BaseModel
 from pymongo import MongoClient, database
+from pymongo.database import Database
 
 from mongocd.Domain.Base import Constants, CustomResource, ReturnCodes
 
@@ -176,7 +177,8 @@ class DbClients:
     # shclientAsync: list[str]
 
     def __init__(self, source_conn_string: str, source_password: str, authSource: str, source_db: str, logger: Logger):
-        self.pyclient=MongoClient(source_conn_string, password=source_password, authSource=authSource)[source_db]
+        # self.pyclient=MongoClient(source_conn_string, password=source_password, authSource=authSource)[source_db]
+        self.pyclient = Database(MongoClient(source_conn_string, password=source_password, authSource=authSource), source_db)
         self.shclient=f'mongosh "{source_conn_string}" --password "{source_password}" --authenticationDatabase "{authSource}" --quiet --json=canonical'
         self.shclientAsync=['mongosh', source_conn_string, '--password', source_password, '--authenticationDatabase', source_conn_string, '--quiet', '--json=canonical']
         self.logger = logger

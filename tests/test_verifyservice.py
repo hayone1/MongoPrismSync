@@ -37,7 +37,7 @@ def test_verifyConnectivity_noConnString(verifyService, source_password, source_
 def test_verify_connectivity(verifyService, source_password, source_conn_string):
     '''Test that when all parameters are supplied, {ReturnCodes.SUCCESS} 
     or {ReturnCodes.DB_ACCESS_ERROR} is returned by VerifyConnectivity'''
-    if not (source_password == None and utils.is_empty_or_whitespace(source_conn_string)):
+    if source_password != None and not utils.is_empty_or_whitespace(source_conn_string):
         result = verifyService.verify_connectivity(source_password)
         assert result == ReturnCodes.SUCCESS or result == ReturnCodes.DB_ACCESS_ERROR, \
             f"expected {ReturnCodes.SUCCESS} or {ReturnCodes.DB_ACCESS_ERROR}. got {result}"

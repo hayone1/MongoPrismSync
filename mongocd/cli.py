@@ -5,7 +5,7 @@ from typing import Optional
 from kink import inject, di
 import typer
 from mongocd.Domain.Exceptions import SUCCESS, ERRORS
-from mongocd.Core import config as prism_config
+from mongocd.Core import config as mongocd_config
 from logging import Logger
 from mongocd.Interfaces.Services import *
 from rich import print
@@ -18,7 +18,7 @@ verifyService = di[IVerifyService]
 
 def _version_callback(value: bool) -> None:
     if value:
-        typer.echo(f"{prism_config.__app_name__} v{prism_config.__version__}")
+        typer.echo(f"{mongocd_config.__app_name__} v{mongocd_config.__version__}")
         raise typer.Exit()
     
 @app.command()
@@ -58,9 +58,9 @@ def init(
         logger.info(f"Using default working folder: {Constants.default_folder}")
 
     if config_folder_path is None:
-        config_folder_path = typer.prompt("Enter path of working directory: ")
+        config_folder_path = typer.prompt("Enter path of working directory(absolute/relative): ")
 
-    if prism_config.init_configs(config_folder_path, sanitize_config, update_templates, template_url) != SUCCESS:
+    if mongocd_config.init_configs(config_folder_path, sanitize_config, update_templates, template_url) != SUCCESS:
         raise typer.Exit(ReturnCodes.UNINITIALIZED.value)
 
 @app.command()
@@ -86,7 +86,7 @@ def weave(
         #set both config_folder_path and the env variable
         os.environ[Constants.config_folder_key] = config_folder_path = \
             (config_folder_path 
-             or typer.prompt("Working dirctory not set. Enter path of working directory"))
+             or typer.prompt("Working dirctory not set. Enter path of working directory(absolute/relative)"))
         reload_dependencies = True
     if os.getenv(Constants.mongo_source_pass) is None:
         reload_dependencies = True
@@ -97,10 +97,11 @@ def weave(
 
     #refresh dependencies
     if reload_dependencies == True:
-        # utils.reload_program(prism_config.__app_name__, app)
-        prism_config.inject_dependencies()
-        global mongoMigration; mongoMigration = di[MongoMigration]
-        global verifyService; verifyService = di[IVerifyService]
+        # utils.reload_program(mongocd_config.__app_name__, app)
+        inject_result = mongocd_config.inject_dependencies()
+        if inject_result == ReturnCodes.SUCCESS:
+            global mongoMigration; mongoMigration = di[MongoMigration]
+            global verifyService; verifyService = di[IVerifyService]
         # weave()
         # sys.exit()
 

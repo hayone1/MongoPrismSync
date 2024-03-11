@@ -15,7 +15,9 @@ class ReturnCodes(Enum):
     UNINITIALIZED = 6
     UNKNOWN_ERROR = 7
     ENVVAR_ACCESS_ERROR = 8
-    DB_ACCESS_ERROR = 9
+    DB_ACCESS_ERROR = 9,
+    TIMEOUT_ERROR = 10,
+    CONNECTION_ERROR = 11
 
 class Messages:
     run_init = f"""Please run mongocd init
@@ -27,6 +29,7 @@ class Messages:
     folder_inaccessible = "folder not found or inaccessible"
     envvar_inaccessible = "environment variable not found or inaccessible"
     specvalue_missing = "config spec value is missing or inaccessibe. Could it be a typo?"
+    operation_timeout = "timeout while fetching resource or performing operation."
 
 class Constants:
     command = "command"
