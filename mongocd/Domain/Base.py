@@ -89,7 +89,7 @@ class FileStructure(Enum):
     GETCOLLECTIONDATA = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.getCollectionData}')
     UTILS = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.utils}')
     COPYINDICES = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.copyIndices}')
-    DEEPCOMPARECOPY = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.deepCompareCopy}')
+    DEEPCOMPARECOPY = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.compare_insert}')
     DUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.duplicateCollections}')
     COPYDATA = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.copyData}')
     # INIT_SCRIPT = conform_path(f'{TEMPLATESFOLDER}/init_script.js')

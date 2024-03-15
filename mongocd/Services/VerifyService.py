@@ -4,6 +4,7 @@ from mongocd.Domain.Base import *
 from mongocd.Domain.Database import *
 from mongocd.Interfaces.Services import IVerifyService
 from rich import print
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 
 # @inject(alias=IVerifyService)
@@ -34,18 +35,27 @@ class VerifyService(IVerifyService):
         # success_database_clients = []
         for db, client in self.clients.items():
             try:
-                pymongoCheck = client.pyclient.command('ping')
-                mongoshCheck = client.ShCommand("db.runCommand({ ping: 1 });")
+                with Progress(SpinnerColumn(),
+                              TextColumn("[progress.description]{task.description}"), 
+                              transient=True
+                ) as progress:
+                    progress.add_task(description="verifying pyclient connectivity...", total=None)
+                    pymongoCheck = client.pyclient.command('ping')
+                    progress.add_task(description="verifying shclient connectivity...", total=None)
+                    mongoshCheck = client.ShCommand("db.runCommand({ ping: 1 });")
+
+                    
                 # print(pymongoCheck)
                 # print(mongoshCheck)
+                #the commands above will also print their own outcome, so no need to add it to below log
                 if (pymongoCheck['ok'] < 1 or mongoshCheck['ok']['$numberInt'] != '1'):
                     self.logger.error(f"""{ReturnCode.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string} 
                                       | password: {source_password},
                                       Check that the details are correct and you have network access to the database.""")
                     return ReturnCode.DB_ACCESS_ERROR
             except Exception as ex:
-                    self.logger.error(f"""{ReturnCode.DB_ACCESS_ERROR}: Failed connecting to database
-                                      {source_conn_string} | password: {source_password} | {ex}""")
+                    self.logger.error(f"""{ReturnCode.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string} 
+                                      | password: {source_password} | {ex}""")
                     return ReturnCode.DB_ACCESS_ERROR
 
             # print(f"source: {_databaseConfig.destination_db}", self.clients[_databaseConfig.name].destination_client[_databaseConfig.destination_db].command('ping'))

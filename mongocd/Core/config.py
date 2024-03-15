@@ -62,9 +62,10 @@ def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCode 
     logger.info(f"{Messages.dir_validation}: {config_folder_path}")
 
     if not os.path.exists(config_folder_path):
-        logger.warning(f"""{ReturnCode.DIR_ACCESS_ERROR.name}: working {Messages.folder_inaccessible}: {config_folder_path}.
-                       Please set an accessible working folder with 'CONFIGFOLDER'
-                       environment variable or with -o parameter. eg. mongocd weave -o 'folder'""")
+        logger.warning(
+        f"""{ReturnCode.DIR_ACCESS_ERROR.name}: default working {Messages.folder_inaccessible}: {config_folder_path}.
+            Ignore this warning if working folder already set with 'CONFIGFOLDER' environment variable 
+            or with -o parameter. eg. mongocd weave -o 'folder'""")
         return ReturnCode.DIR_ACCESS_ERROR
 
     #confirm that the folder has all the necessary files
@@ -168,7 +169,7 @@ def init_configs(config_folder_path: str, sanitize_config: bool,
             return ReturnCode.EXTRACT_FILE_ERROR
         
     #init output folder
-    os.makedirs(f"{config_folder_path}/{FileStructure.OUTPUTFOLDER}", exist_ok=True)
+    os.makedirs(f"{config_folder_path}/{FileStructure.OUTPUTFOLDER.value}", exist_ok=True)
     
     # os.environ[Constants.mongo_source_pass] = source_password
     logger.info("Initialization Successful")

@@ -13,7 +13,7 @@ class DatabaseService(IDatabaseService):
             self.templates = templates
             self.clients = clients
             self.collection_service = collection_service
-            self.output_folder = f"{config_folder_path}/{FileStructure.OUTPUTFOLDER}"
+            self.output_folder = f"{config_folder_path}/{FileStructure.OUTPUTFOLDER.value}"
 
     async def GenerateIndexReplicationCommandAsync(self, databaseConfig: DatabaseConfig) -> str | ReturnCode:
         '''Pulls index data from collections of source db and returns mongosh commands that can be 

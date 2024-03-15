@@ -37,7 +37,7 @@ def init(
         This will remove unnecessary fields"""
     ),
     update_templates: Optional[bool] = typer.Option(
-        True,
+        False,
         "--update_templates",
         "-u",
         help="""Weather or not to download the templates.
