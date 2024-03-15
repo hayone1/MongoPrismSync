@@ -12,7 +12,7 @@ from requests.exceptions import *
 
 import requests
 from typer import Typer
-from mongocd.Domain.Base import Messages, ReturnCodes
+from mongocd.Domain.Base import Messages, ReturnCode
 from mongocd.Core import config
 
 # @staticmethod
@@ -78,10 +78,10 @@ def download_and_extract_zip(zip_url: str, extract_folder: str) -> bool:
         logger.debug(Messages.remove_file)
         os.remove(zip_file_path)
     except ConnectionError as ex:
-        logger.error(f"{ReturnCodes.CONNECTION_ERROR}: Unable to fetch latest templates, please check that you have an active internet connection. {ex}")
+        logger.error(f"{ReturnCode.CONNECTION_ERROR}: Unable to fetch latest templates, please check that you have an active internet connection. {ex}")
         return False
     except Exception as ex:
-        logger.error(f"""{ReturnCodes.UNKNOWN_ERROR.name}: Unknown error occurred while 
+        logger.error(f"""{ReturnCode.UNKNOWN_ERROR.name}: Unknown error occurred while 
                      {Messages.write_file} or {Messages.extract_file} or {Messages.remove_file} | {ex} | {traceback.format_exc()}""")
         return False
     logger.debug(f"Download and Extract Successful: {zip_url} | destination: {extract_folder}")

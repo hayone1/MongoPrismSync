@@ -7,7 +7,7 @@ from rich import print
 
 
 # @inject(alias=IVerifyService)
-@inject
+# @inject
 class VerifyService(IVerifyService):
     # parameters are injected by di
     def __init__(self, mongoMigration: MongoMigration, clients: dict[str, DbClients], logger: Logger):
@@ -15,17 +15,17 @@ class VerifyService(IVerifyService):
             self.mongoMigration = mongoMigration
             self.clients = clients
 
-    def verify_connectivity(self, source_password: str) -> ReturnCodes:
+    def verify_connectivity(self, source_password: str) -> ReturnCode:
         source_conn_string = self.mongoMigration.spec.source_conn_string
 
         if (source_password == None):
-            self.logger.fatal(f"{ReturnCodes.ENVVAR_ACCESS_ERROR}: {Messages.envvar_inaccessible}: {Constants.mongo_source_pass}")
-            return ReturnCodes.ENVVAR_ACCESS_ERROR
+            self.logger.fatal(f"{ReturnCode.ENVVAR_ACCESS_ERROR}: {Messages.envvar_inaccessible}: {Constants.mongo_source_pass}")
+            return ReturnCode.ENVVAR_ACCESS_ERROR
         
         if (utils.is_empty_or_whitespace(source_conn_string)):
             #source_conn_string= will print the variable name and value
-            self.logger.fatal(f"{ReturnCodes.READ_CONFIG_ERROR}: {Messages.specvalue_missing}: {source_conn_string=}")
-            return ReturnCodes.READ_CONFIG_ERROR
+            self.logger.fatal(f"{ReturnCode.READ_CONFIG_ERROR}: {Messages.specvalue_missing}: {source_conn_string=}")
+            return ReturnCode.READ_CONFIG_ERROR
         # source_password = self.mongoMigration.spec.secretVars['stringData']['source_password']
         # destination_password = self.mongoMigration.spec.secretVars['destination_password']
 
@@ -39,21 +39,21 @@ class VerifyService(IVerifyService):
                 # print(pymongoCheck)
                 # print(mongoshCheck)
                 if (pymongoCheck['ok'] < 1 or mongoshCheck['ok']['$numberInt'] != '1'):
-                    self.logger.error(f"""{ReturnCodes.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string} 
+                    self.logger.error(f"""{ReturnCode.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string} 
                                       | password: {source_password},
                                       Check that the details are correct and you have network access to the database.""")
-                    return ReturnCodes.DB_ACCESS_ERROR
+                    return ReturnCode.DB_ACCESS_ERROR
             except Exception as ex:
-                    self.logger.error(f"""{ReturnCodes.DB_ACCESS_ERROR}: Failed connecting to database
+                    self.logger.error(f"""{ReturnCode.DB_ACCESS_ERROR}: Failed connecting to database
                                       {source_conn_string} | password: {source_password} | {ex}""")
-                    return ReturnCodes.DB_ACCESS_ERROR
+                    return ReturnCode.DB_ACCESS_ERROR
 
             # print(f"source: {_databaseConfig.destination_db}", self.clients[_databaseConfig.name].destination_client[_databaseConfig.destination_db].command('ping'))
             
         self.logger.info("Successfully connected to source mongodb")
-        return ReturnCodes.SUCCESS
+        return ReturnCode.SUCCESS
 
-    def verify_databases(self) -> ReturnCodes:
+    def verify_databases(self) -> ReturnCode:
         databaseConfig = self.mongoMigration.spec.databaseConfig
 
         #list of databases that had connectivity issues
@@ -63,13 +63,13 @@ class VerifyService(IVerifyService):
             self.logger.info(f"verify databases connectivity: {_databaseConfig.name}")
             if self.clients == None:
                 print("[red] Pre-requisites not met to verify database. Please fill in correct details in the weaveconfig.yml")
-                return ReturnCodes.INVALID_CONFIG_ERROR
+                return ReturnCode.INVALID_CONFIG_ERROR
             if _databaseConfig.skip == True:
                 self.logger.warning(f"[{_databaseConfig.name}]: skip set to true, skipping...")
                 continue
             source_db = self.clients[_databaseConfig.name].pyclient
             # destination_db = self.clients[_databaseConfig.name].source_client[_databaseConfig.destination_db]
-            if _databaseConfig.SetCollectionConfig(source_db) != ReturnCodes.SUCCESS:
+            if _databaseConfig.SetCollectionConfig(source_db) != ReturnCode.SUCCESS:
                 errored_databases.append(_databaseConfig.name)
                 continue
             success_databases.append(_databaseConfig.name)
@@ -79,7 +79,7 @@ class VerifyService(IVerifyService):
         
         if len(success_databases) > 0:
             self.logger.info(f"successfully connected to some or all databases: {success_databases}")
-            return ReturnCodes.SUCCESS
+            return ReturnCode.SUCCESS
         else:
-            return ReturnCodes.DB_ACCESS_ERROR
+            return ReturnCode.DB_ACCESS_ERROR
         # destination_collections = source_db.list_collection_names(filter=filter)

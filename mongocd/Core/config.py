@@ -1,36 +1,26 @@
-import datetime
-from logging import Logger
-import os
-from pathlib import Path
-import traceback
+import os,traceback
 from kink import inject
 import yaml
 
-from mongocd.Domain.Exceptions import (
-    SUCCESS, ARG_ERROR, DIR_ACCESS_ERROR, READ_CONFIG_ERROR, INVALID_CONFIG_ERROR, EXTRACT_FILE_ERROR
-)
-from mongocd.Domain.Base import CustomResource, Constants, FileStructure, Messages, ReturnCodes
+from mongocd.Domain.Base import *
 from mongocd.Domain.Database import MongoMigration
 from mongocd.Core import utils
+from mongocd.Interfaces.Services import *
+from mongocd.Services.CollectionService import CollectionService
+from mongocd.Services.DatabaseService import DatabaseService
+from mongocd.Services.VerifyService import VerifyService
 
-import logging
-import multiprocess
+
+
 from pymongo import errors
-from pythonjsonlogger import jsonlogger
 from rich.logging import RichHandler
 from logging import Logger
-
 from kink import di
-import typer
-from mongocd.Domain.Base import *
-
-from mongocd.Interfaces.Services import *
-# from mongocd.Services import *
-from mongocd.Services.VerifyService import VerifyService
+from jinja2 import Environment, FileSystemLoader
 
 # from mongocd.Domain.Database import *
 
-cores: int = multiprocess.cpu_count()
+cores: int = os.cpu_count()
 __app_name__ = "mongocd"
 __version__ = '0.0.1'
 
@@ -66,24 +56,24 @@ def init_logger() -> Logger:
     logger.addFilter(PasswordFilter())
     return logger
 @staticmethod
-def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCodes | MongoMigration:
+def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCode | MongoMigration:
     '''Validate that working directory has the minimum capabilities
     for a successful weave.'''
     logger.info(f"{Messages.dir_validation}: {config_folder_path}")
 
     if not os.path.exists(config_folder_path):
-        logger.warning(f"""{ReturnCodes.DIR_ACCESS_ERROR.name}: working {Messages.folder_inaccessible}: {config_folder_path}.
+        logger.warning(f"""{ReturnCode.DIR_ACCESS_ERROR.name}: working {Messages.folder_inaccessible}: {config_folder_path}.
                        Please set an accessible working folder with 'CONFIGFOLDER'
                        environment variable or with -o parameter. eg. mongocd weave -o 'folder'""")
-        return ReturnCodes.DIR_ACCESS_ERROR
+        return ReturnCode.DIR_ACCESS_ERROR
 
     #confirm that the folder has all the necessary files
-    config_folder_contents = os.listdir(config_folder_path)
+    # config_folder_contents = os.listdir(config_folder_path)
     for file_location in (FileStructure):
         full_path = f"{config_folder_path}{os.sep}{file_location.value}"
         if not os.path.exists(full_path):
-            logger.warning(f"{ReturnCodes.UNINITIALIZED.name}: file missing from working dir: {full_path}. {Messages.run_init}")
-            return ReturnCodes.UNINITIALIZED
+            logger.warning(f"{ReturnCode.UNINITIALIZED.name}: file missing from working dir: {full_path}. {Messages.run_init}")
+            return ReturnCode.UNINITIALIZED
     
     config_file_path = os.path.join(config_folder_path, FileStructure.CONFIGFILE.value)
     return config_file_path
@@ -95,7 +85,7 @@ def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCodes
     #     return migration_config_data
     
 @staticmethod
-def inject_dependencies() -> ReturnCodes:
+def inject_dependencies() -> ReturnCode:
     logger = init_logger()
     di[Logger] = lambda x: logger
 
@@ -105,26 +95,27 @@ def inject_dependencies() -> ReturnCodes:
 
     #need to deal with persisting SOURCE_PASSWORD
     if (CONFIG_FOLER_PATH is None or SOURCE_PASSWORD is None):
-        logger.warning(f"""{ReturnCodes.UNINITIALIZED.name}: Required environment variables 
+        logger.warning(f"""{ReturnCode.UNINITIALIZED.name}: Required environment variables 
                        {Constants.config_folder_key} or {Constants.mongo_source_pass} is not set. {Messages.run_init}""")
     #Dependency Injection
     try:
+
         config_file_path = validate_workingdir(CONFIG_FOLER_PATH, di[Logger])
 
         #start out as null, dependencies need to be injected the order given
         mongoMigration: MongoMigration = None; di.factories[MongoMigration] = lambda x: mongoMigration
         clients: dict[str, DbClients] = None; di.factories["clients"] = lambda x: clients
         verifyService: IVerifyService = None; di.factories[IVerifyService] = lambda x: verifyService
-        
+        databaseService: IDatabaseService = None; di.factories[IDatabaseService] = lambda x: databaseService
         #if validation was sucessful, i.e it returned the config_file_path instead of a return code
-        if isinstance(config_file_path, ReturnCodes):
-            return # depeendencies will be None
+        if isinstance(config_file_path, ReturnCode):
+            return # dependencies will be None
         #else
         mongoMigration = MongoMigration().Init(config_file_path)
         clients = dict()
         for _databaseConfig in mongoMigration.spec.databaseConfig:
             required_args = [mongoMigration.spec.source_conn_string, SOURCE_PASSWORD, _databaseConfig.source_authdb,_databaseConfig.source_db]
-
+            
             #if any of the required parameters to form the clients are not present 
             #then dont form the clients for this iteration
             if None in required_args or '' in required_args:
@@ -132,23 +123,29 @@ def inject_dependencies() -> ReturnCodes:
             #else
             clients[_databaseConfig.name] = DbClients(
                 source_conn_string=mongoMigration.spec.source_conn_string, source_password=SOURCE_PASSWORD, 
-                authSource=_databaseConfig.source_authdb, source_db=_databaseConfig.source_db)
+                authSource=_databaseConfig.source_authdb, source_db=_databaseConfig.source_db, logger=logger)
         
-        verifyService = VerifyService()
-            
+        verifyService = VerifyService(mongoMigration, clients, logger)
+        
+        #no need to validate existence of folder as validate_workingdir would have done that
+        template_abs_folder = f"{CONFIG_FOLER_PATH}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
+        templates = Environment(loader=FileSystemLoader(template_abs_folder))
+
+        collectionService = CollectionService(templates, mongoMigration, clients, logger)
+        databaseService = DatabaseService(templates, config_file_path, clients, collectionService, logger)
             # print("ok")
 
     except OSError as ex:
-        logger.fatal(f"{ReturnCodes.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.dir_validation}")
-        return ReturnCodes.DIR_ACCESS_ERROR
+        logger.fatal(f"{ReturnCode.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.dir_validation}")
+        return ReturnCode.DIR_ACCESS_ERROR
     except errors.ConfigurationError as ex:
-        logger.error(f"{ReturnCodes.TIMEOUT_ERROR}: {Messages.operation_timeout} | {ex}")
-        return ReturnCodes.TIMEOUT_ERROR.value
+        logger.error(f"{ReturnCode.TIMEOUT_ERROR}: {Messages.operation_timeout} | {ex}")
+        return ReturnCode.TIMEOUT_ERROR.value
     except Exception as ex:
-        logger.fatal(f"{ReturnCodes.UNKNOWN_ERROR.name}: Unknown Error occurred while {Messages.dir_validation} | {ex}")
-        return ReturnCodes.UNKNOWN_ERROR.value
+        logger.fatal(f"{ReturnCode.UNKNOWN_ERROR.name}: Unknown Error occurred while {Messages.dir_validation} | {ex}")
+        return ReturnCode.UNKNOWN_ERROR.value
     
-    return ReturnCodes.SUCCESS
+    return ReturnCode.SUCCESS
     # di[IVerifyService] = VerifyService()
 
 
@@ -163,15 +160,19 @@ def init_configs(config_folder_path: str, sanitize_config: bool,
 
     #return error 
     if isinstance(prismsync_config, int): return prismsync_config
-
+    template_abs_folder = f"{config_folder_path}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
     if update_templates:
-        extract_successful =  utils.download_and_extract_zip(prismsync_config.spec.remote_template,
-                                    f"{config_folder_path}{os.sep}{FileStructure.TEMPLATESFOLDER.value}")
+        extract_successful = utils.download_and_extract_zip(prismsync_config.spec.remote_template,
+                                template_abs_folder)
         if extract_successful == False:
-            return EXTRACT_FILE_ERROR
+            return ReturnCode.EXTRACT_FILE_ERROR
+        
+    #init output folder
+    os.makedirs(f"{config_folder_path}/{FileStructure.OUTPUTFOLDER}", exist_ok=True)
+    
     # os.environ[Constants.mongo_source_pass] = source_password
     logger.info("Initialization Successful")
-    return SUCCESS
+    return ReturnCode.SUCCESS
 
 @staticmethod
 @inject
@@ -208,11 +209,11 @@ def init_config_file(config_folder_path: str, logger: Logger, sanitize_config: b
         os.environ[Constants.config_folder_key] = config_folder
         return migration_config_data
     except OSError as ex:
-        logger.error(f"{ReturnCodes.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.write_file}, {config_folder_path} | {ex}")
-        return ReturnCodes.DIR_ACCESS_ERROR
+        logger.error(f"{ReturnCode.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.write_file}, {config_folder_path} | {ex}")
+        return ReturnCode.DIR_ACCESS_ERROR
     except Exception as ex:
-        logger.fatal(f"{ReturnCodes.DIR_ACCESS_ERROR.name}: Unknown Error occurred while {Messages.write_file}, {config_folder_path} | {ex} | {traceback.format_exc()}")
-        return DIR_ACCESS_ERROR
+        logger.fatal(f"{ReturnCode.DIR_ACCESS_ERROR.name}: Unknown Error occurred while {Messages.write_file}, {config_folder_path} | {ex} | {traceback.format_exc()}")
+        return ReturnCode.DIR_ACCESS_ERROR
     # return SUCCESS
 
     

@@ -61,7 +61,7 @@ def init(
         config_folder_path = typer.prompt("Enter path of working directory(absolute/relative): ")
 
     if mongocd_config.init_configs(config_folder_path, sanitize_config, update_templates, template_url) != SUCCESS:
-        raise typer.Exit(ReturnCodes.UNINITIALIZED.value)
+        raise typer.Exit(ReturnCode.UNINITIALIZED.value)
 
 @app.command()
 def weave(
@@ -99,22 +99,22 @@ def weave(
     if reload_dependencies == True:
         # utils.reload_program(mongocd_config.__app_name__, app)
         inject_result = mongocd_config.inject_dependencies()
-        if inject_result == ReturnCodes.SUCCESS:
+        if inject_result == ReturnCode.SUCCESS:
             global mongoMigration; mongoMigration = di[MongoMigration]
             global verifyService; verifyService = di[IVerifyService]
         # weave()
         # sys.exit()
 
     if verifyService is None:
-        raise typer.Exit(ReturnCodes.UNINITIALIZED.value)
+        raise typer.Exit(ReturnCode.UNINITIALIZED.value)
     
     verify_connectivity = verifyService.verify_connectivity(source_password)
-    if verify_connectivity != ReturnCodes.SUCCESS:
-        raise typer.Exit(ReturnCodes.DB_ACCESS_ERROR.value)
+    if verify_connectivity != ReturnCode.SUCCESS:
+        raise typer.Exit(ReturnCode.DB_ACCESS_ERROR.value)
     
     verify_database = verifyService.verify_databases()
-    if verify_database != ReturnCodes.SUCCESS:
-        raise typer.Exit(ReturnCodes.DB_ACCESS_ERROR.value)
+    if verify_database != ReturnCode.SUCCESS:
+        raise typer.Exit(ReturnCode.DB_ACCESS_ERROR.value)
     print("[green] Connection to database established Successfully!")
     #VerifyDatabases
     

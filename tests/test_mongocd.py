@@ -19,7 +19,7 @@ def test_init(runner: CliRunner, caplog):
     # print("Result: ", result.stdout)
     with caplog.at_level(logging.ERROR):
         assert result.exit_code == 0 or \
-        any("ReturnCodes" in message for message in caplog.messages), "Expected ERROR was not logged"
+        any("ReturnCode" in message for message in caplog.messages), "Expected ERROR was not logged"
 
     # print("Result: ", result.stderr)
 
@@ -32,4 +32,4 @@ def test_init(runner: CliRunner, caplog):
 #     assert result.exit_code == 0 
 #     with caplog.at_level(logging.CRITICAL):
 #         print("logs: ",caplog.messages)
-#         assert any("ReturnCodes" in message for message in caplog.messages), "Expected critical error was not logged"
+#         assert any("ReturnCode" in message for message in caplog.messages), "Expected critical error was not logged"

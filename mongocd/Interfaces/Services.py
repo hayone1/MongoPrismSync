@@ -5,12 +5,12 @@ from mongocd.Domain.Base import *
 class IVerifyService(ABC):
 
     @abstractmethod
-    def verify_connectivity(self, source_password: str) -> ReturnCodes:
+    def verify_connectivity(self, source_password: str) -> ReturnCode:
         '''Verify Connectivity to the mongodb instance'''
         pass
 
     @abstractmethod
-    def verify_databases(self) -> ReturnCodes:
+    def verify_databases(self) -> ReturnCode:
         '''Verify connectivity to the databases listen in the weaveconfig'''
         pass
 
@@ -18,23 +18,10 @@ class IVerifyService(ABC):
 #     pass
 
 class ICollectionService:
-    @abstractmethod
-    async def GenerateCreateIndexCommandAsync(databaseConfig: DatabaseConfig, collection_property: CollectionProperty) -> CollectionCommand:
-        pass
-
 
     @abstractmethod
-    async def GetSourceCollectionsAsync(databaseConfig: DatabaseConfig, commandsList: DatabaseSyncScripts,
-                         collection_property: CollectionProperty, get_data_query_template: str, compareCopy_query_template: str):
-        pass
-
-
-    @abstractmethod
-    async def SaveCollectionsCommandsAsync(databaseOutputFolder: str, collectionName: str, collectionScripts: list[DatabaseSyncScripts]):
-        pass
-
-    @abstractmethod
-    async def GenerateSyncScriptsAsync(databaseConfig: DatabaseConfig):
+    async def FormDocumentsDataAsync(self, databaseConfig: DatabaseConfig,
+            collection_property: CollectionProperty, database_folder: str) -> ReturnCode:
         pass
 
     
@@ -43,7 +30,6 @@ class IDatabaseService:
     async def GenerateSyncScriptsAsync(databaseConfig: DatabaseConfig):
         pass
 
-    #==========Synchronous methods===============
     @abstractmethod
-    async def GenerateSyncScripts(databaseConfig: DatabaseConfig):
+    async def GenerateIndexReplicationCommandAsync(databaseConfig: DatabaseConfig, collection_property: CollectionProperty) -> CollectionCommand:
         pass

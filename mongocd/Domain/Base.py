@@ -5,7 +5,7 @@ import os
 from pydantic import BaseModel
 
 
-class ReturnCodes(Enum):
+class ReturnCode(Enum):
     SUCCESS = 0,
     ARG_ERROR = 1,
     DIR_ACCESS_ERROR = 2,
@@ -18,6 +18,8 @@ class ReturnCodes(Enum):
     DB_ACCESS_ERROR = 9,
     TIMEOUT_ERROR = 10,
     CONNECTION_ERROR = 11
+    # error is reported from the db side
+    DB_ERROR = 12
 
 class Messages:
     run_init = f"""Please run mongocd init
@@ -37,12 +39,17 @@ class Constants:
     mongo_source_pass = "MONGOSOURCEPASSWORD"
     config_folder_key = "CONFIGFOLDER"
     sanitize_config = "SANITIZE_CONFIG"
-    backup_suffix = "_cd_backup"
-    main_script = 'main.js'
-    post_script = 'post_script.js'
     default_folder = 'MongoMigrate'
     log_level = 'LOG_LEVEL'
     default_log_level  = 'error'
+    db_name = 'db_name'
+    coll_name = 'coll_name'
+    source_collections = 'source_collections'
+    source_collections_indices = 'source_collections_indices'
+    unique_index_fields = 'unique_index_fields'
+    source_data_json = 'source_data_json'
+    unique_fields = 'unique_fields'
+    # js = '.js'
 
 LOG_LEVEL_MAP = {
     "debug": logging.DEBUG,
@@ -57,6 +64,18 @@ class CustomResource(BaseModel):
     kind: str = "WeaveConfig"
     metadata: dict = dict()
 
+class TemplatesFiles:
+    getCollectionData = 'get-collection-data.js'
+    utils = 'utils.js'
+    copyIndices = 'copy-indices.js'
+    compare_insert = 'compare-insert.js'
+    duplicateCollections = 'duplicate-collections.js'
+    copyData = 'copy-data.js'
+    init_script = 'init_script.js'
+    main_script = 'main.js'
+    post_script = 'post_script.js'
+    deleteDuplicateCollection = 'delete-duplicate-collection.js'
+
 class FileStructure(Enum):
 
     def conform_path(input_path: str):
@@ -64,30 +83,15 @@ class FileStructure(Enum):
         converted_path = os.path.join(*input_path.split("\\"))
         return os.path.normpath(converted_path)
     
+    CONFIGFILE = 'weaveconfig.yml'
     METAFOLDER = ".mongocd"
     TEMPLATESFOLDER = conform_path(f"{METAFOLDER}/templates")
-    CONFIGFILE = 'weaveconfig.yml'
-    GETCOLLECTIONDATA = conform_path(f'{TEMPLATESFOLDER}/get-data.js')
-    FUNCTIONS = conform_path(f'{TEMPLATESFOLDER}/functions.js')
-    COPYINDICES = conform_path(f'{TEMPLATESFOLDER}/copy-indices.js')
-    DEEPCOMPARECOPY = conform_path(f'{TEMPLATESFOLDER}/deep-compare-copy.js')
-    DUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/duplicate-collection.js')
-    COPYDATA = conform_path(f'{TEMPLATESFOLDER}/copy-data.js')
+    GETCOLLECTIONDATA = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.getCollectionData}')
+    UTILS = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.utils}')
+    COPYINDICES = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.copyIndices}')
+    DEEPCOMPARECOPY = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.deepCompareCopy}')
+    DUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.duplicateCollections}')
+    COPYDATA = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.copyData}')
     # INIT_SCRIPT = conform_path(f'{TEMPLATESFOLDER}/init_script.js')
-    CLEANUPDUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/delete-duplicate-collection.js')
-
-
-
-
-class TemplatesFiles:
-    getCollectionData = 'get-data.js'
-    functions = 'functions.js'
-    copyIndices = 'copy-indices.js'
-    deepCompareCopy = 'deep-compare-copy.js'
-    duplicateCollection = 'duplicate-collection.js'
-    copyData = 'copy-data.js'
-    backup_suffix = '_cd_backup'
-    init_script = 'init_script.js'
-    main_script = 'main.js'
-    post_script = 'post_script.js'
-    cleanupDuplicateCollection = 'delete-duplicate-collection.js'
+    DELETEDUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.deleteDuplicateCollection}')
+    OUTPUTFOLDER = "output"

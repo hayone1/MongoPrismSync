@@ -25,4 +25,4 @@ def test_di_content(runner: CliRunner):
 #     with caplog.at_level(logging.CRITICAL):
 #         config.inject_dependencies()
 #         print ("message",caplog.messages)
-#         assert any("ReturnCodes" in message for message in caplog.messages), "Expected critical error was not logged"
+#         assert any("ReturnCode" in message for message in caplog.messages), "Expected critical error was not logged"

@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from pymongo import MongoClient, database
 from pymongo.database import Database
 
-from mongocd.Domain.Base import Constants, CustomResource, ReturnCodes
+from mongocd.Domain.Base import Constants, CustomResource, ReturnCode
 
 
 class CreateIndexOptions:
@@ -23,6 +23,11 @@ class CreateIndexOptions:
 class CollectionCommand(BaseModel):
     name: str = "*"
     command: str = "*"
+
+class CollectionData():
+    unique_fields: dict
+    value: dict
+    filename: str
 
 class ShardData(BaseModel):
     database: bool = False #if database should be sharded
@@ -93,7 +98,7 @@ class DatabaseConfig(BaseModel):
     postCollectionCommands: str = "db.runCommand({ ping: 1 });"
 
     @inject
-    def SetCollectionConfig(self, db: database.Database, logger: Logger = None) -> ReturnCodes:
+    def SetCollectionConfig(self, db: database.Database, logger: Logger = None) -> ReturnCode:
         
         # exclude_filter = {'name': {'$not': {'$in': exclusion_list}}} #I wonder why I didnt use this
         # filter = {"name": {"$regex": r"^(?!system\.)"}}
@@ -107,7 +112,7 @@ class DatabaseConfig(BaseModel):
             collection_names = db.list_collection_names(filter=filter)
         except Exception as ex:
             logger.error("Unable to establish database session to fetch collection names | {ex}")
-            return ReturnCodes.DB_ACCESS_ERROR
+            return ReturnCode.DB_ACCESS_ERROR
         #if user specified includeCollections, then pick only the valid
         #collections out of what the user specified
         if (len(self.collections_config.includeCollections) > 0):
@@ -145,7 +150,7 @@ class DatabaseConfig(BaseModel):
         for property in self.collections_config.properties:
             logger.info(f"database: {self.name}, collection: {property.name}, excludeIndices: {property.excludeIndices}, unique_index_fields: {property.unique_index_fields}")
             logger.debug(f"database: {self.name}, indices: {property.indices}")
-        return ReturnCodes.SUCCESS
+        return ReturnCode.SUCCESS
 
 
 class MongoMigrationSpec(BaseModel):
@@ -170,7 +175,6 @@ class MongoMigration(CustomResource):
             return self
 
 # @dataclass
-@inject
 class DbClients:
     # pyclient: database.Database
     # shclient: str
@@ -198,7 +202,7 @@ class DbClients:
         except Exception as ex:
             self.logger.error(f"Unable to load --eval result. Check your connection string/parameters and connectivity: {self.shclient} | {ex}")
             return result
-    async def ShCommandAsync(self, command: str):
+    async def ShCommandAsync(self, command: str) -> dict | ReturnCode:
         '''
         Runs command asynchronously using mongosh installed on system
         remarks: quote commands using double quotes and any internal part
@@ -217,7 +221,8 @@ class DbClients:
         if process.returncode == 0:
             return json.loads(stdout.decode().rstrip())
         else:
-            return stderr.decode().rstrip()
+            self.logger.error(f"Error occurred in ShCommandAsync {full_command} | {stderr.decode().rstrip()}")
+            return ReturnCode.DB_ERROR
         # return json.loads(result)
     def ShFileCommand (self, command: str):
         with tempfile.NamedTemporaryFile(mode='w', delete=True) as tmpfl:
@@ -254,8 +259,5 @@ class DbClients:
 
 # will this be memory hungry?
 class DatabaseSyncScripts(BaseModel):
-    # compiledScript: list[str] = list()
     databaseScript: list[str] = list()
     collectionScript: defaultdict[str, list[str]] = defaultdict(list)
-    # databasePostScript: list[str] = list()
-    # documentScript: list[str] = list() #unused
