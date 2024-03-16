@@ -1,5 +1,5 @@
 import os,traceback
-from kink import inject
+from kink import inject, di
 import yaml
 
 from mongocd.Domain.Base import *
@@ -10,14 +10,13 @@ from mongocd.Services.CollectionService import CollectionService
 from mongocd.Services.DatabaseService import DatabaseService
 from mongocd.Services.VerifyService import VerifyService
 
-
+from rich import print
+from rich.logging import RichHandler
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from logging import Logger
 
 from pymongo import errors
-from rich.logging import RichHandler
-from logging import Logger
-from kink import di
 from jinja2 import Environment, FileSystemLoader
-
 # from mongocd.Domain.Database import *
 
 cores: int = os.cpu_count()
@@ -88,7 +87,18 @@ def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCode 
 @staticmethod
 def inject_dependencies() -> ReturnCode:
     logger = init_logger()
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"), 
+        transient=False
+    )
+
     di[Logger] = lambda x: logger
+    di.factories[Progress] = lambda x: Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"), 
+        transient=True
+    )
 
     CONFIG_FOLER_PATH = utils.get_full_path(
         os.getenv(Constants.config_folder_key, Constants.default_folder))
@@ -100,7 +110,6 @@ def inject_dependencies() -> ReturnCode:
                        {Constants.config_folder_key} or {Constants.mongo_source_pass} is not set. {Messages.run_init}""")
     #Dependency Injection
     try:
-
         config_file_path = validate_workingdir(CONFIG_FOLER_PATH, di[Logger])
 
         #start out as null, dependencies need to be injected the order given
@@ -114,26 +123,27 @@ def inject_dependencies() -> ReturnCode:
         #else
         mongoMigration = MongoMigration().Init(config_file_path)
         clients = dict()
-        for _databaseConfig in mongoMigration.spec.databaseConfig:
-            required_args = [mongoMigration.spec.source_conn_string, SOURCE_PASSWORD, _databaseConfig.source_authdb,_databaseConfig.source_db]
+        for databaseConfig in mongoMigration.spec.databaseConfigs:
+            required_args = [mongoMigration.spec.source_conn_string, SOURCE_PASSWORD, databaseConfig.source_authdb,databaseConfig.source_db]
             
             #if any of the required parameters to form the clients are not present 
             #then dont form the clients for this iteration
             if None in required_args or '' in required_args:
                 continue
             #else
-            clients[_databaseConfig.name] = DbClients(
+            clients[databaseConfig.name] = DbClients(
                 source_conn_string=mongoMigration.spec.source_conn_string, source_password=SOURCE_PASSWORD, 
-                authSource=_databaseConfig.source_authdb, source_db=_databaseConfig.source_db, logger=logger)
+                authSource=databaseConfig.source_authdb, source_db=databaseConfig.source_db)
         
-        verifyService = VerifyService(mongoMigration, clients, logger)
+        verifyService = VerifyService(mongoMigration, clients)
         
         #no need to validate existence of folder as validate_workingdir would have done that
         template_abs_folder = f"{CONFIG_FOLER_PATH}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
         templates = Environment(loader=FileSystemLoader(template_abs_folder))
 
-        collectionService = CollectionService(templates, mongoMigration, clients, logger)
-        databaseService = DatabaseService(templates, config_file_path, clients, collectionService, logger)
+        collectionService = CollectionService(templates, mongoMigration, clients)
+        databaseService = DatabaseService(templates, config_file_path, clients,
+                                          mongoMigration.spec.databaseConfigs, collectionService)
             # print("ok")
 
     except OSError as ex:
@@ -153,26 +163,37 @@ def inject_dependencies() -> ReturnCode:
 @staticmethod
 @inject
 def init_configs(config_folder_path: str, sanitize_config: bool,
-            update_templates: bool = True, template_url: str = None, logger: Logger = None) -> int:
+            update_templates: bool = True, template_url: str = None,
+            logger: Logger = None, progress: Progress = None) -> int:
     '''Initialize the application defaults and files'''
     # config_folder_path = Path(config_folder_dir)
-    prismsync_config = init_config_file(config_folder_path, sanitize_config, template_url)
-    #download templates
+    # progress is already injected but needs "with" to work
+    with progress as _:
+        init_file_task = progress.add_task(description="initializing config file...", total=1)
+        prismsync_config = init_config_file(config_folder_path, sanitize_config, template_url)
+        #return error 
+        if isinstance(prismsync_config, int): return prismsync_config
+        # progress.update(init_file_task, completed=True)
+        progress.remove_task(init_file_task)
+        print("[green]✓[/green] configfile initialization successful")
 
-    #return error 
-    if isinstance(prismsync_config, int): return prismsync_config
+    #download templates
     template_abs_folder = f"{config_folder_path}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
     if update_templates:
-        extract_successful = utils.download_and_extract_zip(prismsync_config.spec.remote_template,
-                                template_abs_folder)
-        if extract_successful == False:
-            return ReturnCode.EXTRACT_FILE_ERROR
+        with progress as _:
+            zip_task = progress.add_task(description="updating templates...", total=None)
+            extract_successful = utils.download_and_extract_zip(prismsync_config.spec.remote_template,
+                                    template_abs_folder)
+            if extract_successful == False:
+                return ReturnCode.EXTRACT_FILE_ERROR
+            progress.remove_task(zip_task)
+            print("[green]✓[/green] template update successful")
         
     #init output folder
     os.makedirs(f"{config_folder_path}/{FileStructure.OUTPUTFOLDER.value}", exist_ok=True)
     
     # os.environ[Constants.mongo_source_pass] = source_password
-    logger.info("Initialization Successful")
+    print("[green]Initialization Successful")
     return ReturnCode.SUCCESS
 
 @staticmethod

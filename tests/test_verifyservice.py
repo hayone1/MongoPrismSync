@@ -42,10 +42,10 @@ def test_verify_connectivity(verifyService, source_password, source_conn_string)
         assert result == ReturnCode.SUCCESS or result == ReturnCode.DB_ACCESS_ERROR, \
             f"expected {ReturnCode.SUCCESS} or {ReturnCode.DB_ACCESS_ERROR}. got {result}"
         
-def test_VerifyDatabases_empty_databaseConfig(verifyService):
+def test_verify_empty_databaseConfig(verifyService):
     '''Test that when {databaseConfig} is empty, {ReturnCode.DB_ACCESS_ERROR}
     is returned by VerifyDatabases'''
-    di[MongoMigration].spec.databaseConfig = []
+    di[MongoMigration].spec.databaseConfigs = []
     result = verifyService.verify_databases()
     assert result == ReturnCode.DB_ACCESS_ERROR, \
             f"Expected {ReturnCode.DB_ACCESS_ERROR}, got {result}"

@@ -20,14 +20,14 @@ class IVerifyService(ABC):
 class ICollectionService:
 
     @abstractmethod
-    async def FormDocumentsDataAsync(self, databaseConfig: DatabaseConfig,
+    async def form_documentsdata_async(self, databaseConfig: DatabaseConfig,
             collection_property: CollectionProperty, database_folder: str) -> ReturnCode:
         pass
 
     
 class IDatabaseService:
     @abstractmethod
-    async def GenerateSyncScriptsAsync(databaseConfig: DatabaseConfig):
+    async def generate_syncscripts_async():
         pass
 
     @abstractmethod

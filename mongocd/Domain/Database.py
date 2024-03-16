@@ -148,8 +148,8 @@ class DatabaseConfig(BaseModel):
         
 
         for property in self.collections_config.properties:
-            logger.info(f"database: {self.name}, collection: {property.name}, excludeIndices: {property.excludeIndices}, unique_index_fields: {property.unique_index_fields}")
-            logger.debug(f"database: {self.name}, indices: {property.indices}")
+            logger.debug(f"database: {self.name}, collection: {property.name}, indices: {property.indices}, excludeIndices: {property.excludeIndices}, unique_index_fields: {property.unique_index_fields}")
+            # logger.debug(f"database: {self.name}, indices: {property.indices}")
         return ReturnCode.SUCCESS
 
 
@@ -160,7 +160,7 @@ class MongoMigrationSpec(BaseModel):
     destination_conn_string: str = ""
     connectivityRetry: int = 5
     remote_template: str = "https://github.com/hayone1/MongoPrismSync/releases/download/v1alpha1_v0.0.1/templates_v1alpha1.zip"
-    databaseConfig: list[DatabaseConfig] = [DatabaseConfig()]
+    databaseConfigs: list[DatabaseConfig] = [DatabaseConfig()]
 
 class MongoMigration(CustomResource):
     spec: MongoMigrationSpec = MongoMigrationSpec()
@@ -175,12 +175,13 @@ class MongoMigration(CustomResource):
             return self
 
 # @dataclass
+@inject
 class DbClients:
     # pyclient: database.Database
     # shclient: str
     # shclientAsync: list[str]
 
-    def __init__(self, source_conn_string: str, source_password: str, authSource: str, source_db: str, logger: Logger):
+    def __init__(self, source_conn_string: str, source_password: str, authSource: str, source_db: str, logger: Logger = None):
         # self.pyclient=MongoClient(source_conn_string, password=source_password, authSource=authSource)[source_db]
         self.pyclient = Database(MongoClient(source_conn_string, password=source_password, authSource=authSource), source_db)
         self.shclient=f'mongosh "{source_conn_string}" --password "{source_password}" --authenticationDatabase "{authSource}" --quiet --json=canonical'

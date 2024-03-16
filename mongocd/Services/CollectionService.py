@@ -1,19 +1,21 @@
 from logging import Logger
-
+from kink import inject
 from jinja2 import Environment
 from mongocd.Interfaces.Services import ICollectionService
 from mongocd.Domain.Database import *
 from mongocd.Domain.Base import *
 
+@inject
 class CollectionService(ICollectionService):
-    def __init__(self, templates: Environment, mongoMigration: MongoMigration, clients: dict[str, DbClients], logger: Logger):
+    def __init__(self, templates: Environment, mongoMigration: MongoMigration,
+                clients: dict[str, DbClients], logger: Logger):
             self.logger = logger
             self.templates = templates
             self.mongoMigration = mongoMigration
             self.clients = clients
             # self.template_folder = FileStructure.TEMPLATESFOLDER
 
-    async def FormDocumentsDataAsync(self, databaseConfig: DatabaseConfig,
+    async def form_documentsdata_async(self, databaseConfig: DatabaseConfig,
                             collection_property: CollectionProperty, database_folder: str) -> ReturnCode:
 
         self.logger.debug(f"FormCollectionDataAsync Started: {databaseConfig.source_db} | {collection_property.name}")
@@ -52,7 +54,7 @@ class CollectionService(ICollectionService):
             with open(documentFile, 'w+') as document_file:
                 document_file.write(compare_insert_command)
 
-        self.logger.debug(f"FormDocumentsDataAsync Complete: {databaseConfig.source_db} | {collection_property.name}")
+        self.logger.debug(f"form_documentsdata_async Complete: {databaseConfig.source_db} | {collection_property.name}")
         return ReturnCode.SUCCESS
 
 

@@ -103,6 +103,7 @@ Mongocd aims to contribute and integrate to the various database devops and rele
 ## TODO
 - Weave should check if the current files have been manually edited before proceeding to adjust
 - in debug mode, it should be apparent when a default value is being used for a field
+- replace ABC with accessify to improve access levels and interface strictness
 
 ### Ideas
 Final name of the product couls be mongocd or mongoci or mongocd

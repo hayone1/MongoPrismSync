@@ -4,7 +4,6 @@ import sys
 from typing import Optional
 from kink import inject, di
 import typer
-from mongocd.Domain.Exceptions import SUCCESS, ERRORS
 from mongocd.Core import config as mongocd_config
 from logging import Logger
 from mongocd.Interfaces.Services import *
@@ -14,6 +13,7 @@ app = typer.Typer()
 logger = di[Logger]
 mongoMigration = di[MongoMigration]
 verifyService = di[IVerifyService]
+databaseService = di[IDatabaseService]
 
 
 def _version_callback(value: bool) -> None:
@@ -52,7 +52,7 @@ def init(
     )
 ) -> None:
     '''Initialize the application configurations and verify that the source database is reacheable'''
-    logger.info("Starting: mongocd init")
+    print(f"Starting: {mongocd_config.__app_name__} init")
 
     if config_folder_path == Constants.default_folder:
         logger.info(f"Using default working folder: {Constants.default_folder}")
@@ -60,8 +60,9 @@ def init(
     if config_folder_path is None:
         config_folder_path = typer.prompt("Enter path of working directory(absolute/relative): ")
 
-    if mongocd_config.init_configs(config_folder_path, sanitize_config, update_templates, template_url) != SUCCESS:
+    if mongocd_config.init_configs(config_folder_path, sanitize_config, update_templates, template_url) != ReturnCode.SUCCESS:
         raise typer.Exit(ReturnCode.UNINITIALIZED.value)
+    print(f"{mongocd_config.__app_name__} init completed")
 
 @app.command()
 def weave(
@@ -116,6 +117,8 @@ def weave(
     if verify_database != ReturnCode.SUCCESS:
         raise typer.Exit(ReturnCode.DB_ACCESS_ERROR.value)
     print("[green] Connection to database established Successfully!")
+
+    databaseService.generate_syncscripts_async()
     #VerifyDatabases
     
     
