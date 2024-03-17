@@ -15,10 +15,12 @@ backoff = "2.2.1"
 pymongo = "4.6.1"
 aiofiles = "23.2.1"
 pyyaml = "6.0.1"
-rich = "*"
-kink = "*"
+rich = "==13.7.1"
+kink = "==0.7.0"
 pytest-network = "*"
 jinja2 = "*"
+accessify = "==0.3.1"
+pydantic-yaml = "==1.2.1"
 
 [dev-packages]
 

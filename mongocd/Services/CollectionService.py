@@ -4,9 +4,11 @@ from jinja2 import Environment
 from mongocd.Interfaces.Services import ICollectionService
 from mongocd.Domain.Database import *
 from mongocd.Domain.Base import *
+from accessify import implements
 
 @inject
-class CollectionService(ICollectionService):
+@implements(ICollectionService)
+class CollectionService():
     def __init__(self, templates: Environment, mongoMigration: MongoMigration,
                 clients: dict[str, DbClients], logger: Logger):
             self.logger = logger

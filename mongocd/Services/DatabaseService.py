@@ -5,10 +5,13 @@ from jinja2 import Environment
 from mongocd.Domain.Base import FileStructure, TemplatesFiles
 from mongocd.Domain.Database import *
 from mongocd.Interfaces.Services import ICollectionService, IDatabaseService
+from accessify import implements, private
 
-
+#inject is incompatible with implements
+# @implements(IDatabaseService)
 @inject
 class DatabaseService(IDatabaseService):
+    
     def __init__(self, templates: Environment, config_folder_path: str, 
                 clients: dict[str, DbClients], databaseConfigs: list[DatabaseConfig],
                 collection_service: ICollectionService, logger: Logger = None):
@@ -21,6 +24,7 @@ class DatabaseService(IDatabaseService):
             self.databaseConfigs = databaseConfigs
             self.commandsList: DatabaseSyncScripts = DatabaseSyncScripts()
 
+    @private
     async def generate_indexreplication_commandasync(self, databaseConfig: DatabaseConfig) -> str | ReturnCode:
         '''Pulls index data from collections of source db and returns mongosh commands that can be 
         used to reproduce them in the destination db.
@@ -54,11 +58,13 @@ class DatabaseService(IDatabaseService):
             self.logger.error(f"Unknown error occured in generate_indexreplication_commandasync | {ex}")
             return ReturnCode.UNKNOWN_ERROR
 
+    @private
     def generate_createcollection_command(self, db_name: str, collection_name: str) -> str:
         self.logger.info(f"adding create_collection_command for {collection_name}")
         create_collection_command = f"db.getSiblingDB('{db_name}').createCollection('{collection_name}');\n"
         return create_collection_command
 
+    @private
     async def generate_duplicatecollection_commandasync(self, db_name, collections_config: CollectionsConfig) -> str:
         duplicate_collection_template = self.templates.get_template(TemplatesFiles.duplicateCollections)
         duplicate_collection_commands = await duplicate_collection_template.render_async(
@@ -69,6 +75,7 @@ class DatabaseService(IDatabaseService):
         )
         return duplicate_collection_commands
     
+    @private
     async def generate_deleteduplicatecollection_commandasync(self, db_name, collections_config: CollectionsConfig) -> str:
         delete_duplicate_collections_template = self.templates.get_template(TemplatesFiles.deleteDuplicateCollection)
         delete_duplicate_collections_commands = await delete_duplicate_collections_template.render_async(

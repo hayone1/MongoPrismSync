@@ -32,6 +32,7 @@ class Messages:
     envvar_inaccessible = "environment variable not found or inaccessible"
     specvalue_missing = "config spec value is missing or inaccessibe. Could it be a typo?"
     operation_timeout = "timeout while fetching resource or performing operation."
+    empty_notallowed = "cannot be empty or null."
 
 class Constants:
     command = "command"

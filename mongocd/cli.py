@@ -52,7 +52,7 @@ def init(
     )
 ) -> None:
     '''Initialize the application configurations and verify that the source database is reacheable'''
-    print(f"Starting: {mongocd_config.__app_name__} init")
+    print(f"Starting: {mongocd_config.__app_name__} {init.__name__}")
 
     if config_folder_path == Constants.default_folder:
         logger.info(f"Using default working folder: {Constants.default_folder}")
@@ -60,9 +60,10 @@ def init(
     if config_folder_path is None:
         config_folder_path = typer.prompt("Enter path of working directory(absolute/relative): ")
 
-    if mongocd_config.init_configs(config_folder_path, sanitize_config, update_templates, template_url) != ReturnCode.SUCCESS:
-        raise typer.Exit(ReturnCode.UNINITIALIZED.value)
-    print(f"{mongocd_config.__app_name__} init completed")
+    init_config_result = mongocd_config.init_configs(config_folder_path, sanitize_config, update_templates, template_url)
+    if init_config_result != ReturnCode.SUCCESS:
+        raise typer.Exit(init_config_result.value)
+    print(f"Completed {mongocd_config.__app_name__} {init.__name__}")
 
 @app.command()
 def weave(

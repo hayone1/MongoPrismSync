@@ -24,7 +24,7 @@ from mongocd.Core import config
 @staticmethod
 def is_empty_or_whitespace(input_string: str):
     '''Returns True if object is a string that is empty or contains white space alone'''
-    if not isinstance(input_string, str): return False
+    if not isinstance(input_string, str|None): raise TypeError("object is not a valid string")
     return input_string is None or input_string.strip() == ''
 
 @staticmethod

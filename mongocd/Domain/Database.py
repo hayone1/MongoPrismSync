@@ -7,11 +7,11 @@ from typing import Self
 from collections import defaultdict
 from dataclasses import dataclass
 from mongocd.Core import utils
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationInfo, field_validator, validator
 from pymongo import MongoClient, database
 from pymongo.database import Database
 
-from mongocd.Domain.Base import Constants, CustomResource, ReturnCode
+from mongocd.Domain.Base import Constants, CustomResource, Messages, ReturnCode
 
 
 class CreateIndexOptions:
@@ -45,6 +45,12 @@ class CollectionProperty(BaseModel):
     indices: list[str] = list()
     excludeIndices: list[str] = list()
     includeIndices: list[str] = list()
+
+    @field_validator('name', 'unique_index_key')
+    @classmethod
+    def check_str(cls, value: str, info: ValidationInfo):
+        assert (not utils.is_empty_or_whitespace(value)), f"{info.field_name} {Messages.empty_notallowed}"
+        return value
 
     @inject
     def SetCollectionIndices(self, db: database.Database, logger: Logger = None) -> Self:
@@ -96,6 +102,12 @@ class DatabaseConfig(BaseModel):
     shard: ShardData = ShardData()
     preCollectionCommands: str = "db.runCommand({ ping: 1 });"
     postCollectionCommands: str = "db.runCommand({ ping: 1 });"
+
+    @field_validator('name', 'source_authdb', 'source_db', 'destination_db')
+    @classmethod
+    def check_str(cls, value: str, info: ValidationInfo):
+        assert (not utils.is_empty_or_whitespace(value)), f"{info.field_name} {Messages.empty_notallowed}"
+        return value
 
     @inject
     def SetCollectionConfig(self, db: database.Database, logger: Logger = None) -> ReturnCode:
@@ -162,18 +174,32 @@ class MongoMigrationSpec(BaseModel):
     remote_template: str = "https://github.com/hayone1/MongoPrismSync/releases/download/v1alpha1_v0.0.1/templates_v1alpha1.zip"
     databaseConfigs: list[DatabaseConfig] = [DatabaseConfig()]
 
+    @field_validator('source_conn_string', 'remote_template')
+    @classmethod
+    def check_string(cls, value: str, info: ValidationInfo):
+        assert (not utils.is_empty_or_whitespace(value)), f"{info.field_name} {Messages.empty_notallowed}"
+        assert ('//' in value), f"{info.field_name} must be valid uri"
+        return value
+
+    @field_validator('connectivityRetry')
+    @classmethod
+    def check_int(cls, value: str, info: ValidationInfo):
+        assert value > 0, f"{info.field_name} must be a positive integer"
+        return value
+
+
 class MongoMigration(CustomResource):
     spec: MongoMigrationSpec = MongoMigrationSpec()
 
     #if config is coming from file
     #didnt use __init__ because i'm not sure if safe_load will 
     #call __init__ again
-    def Init(self: Self, config_file_path: str) -> Self:
-        with open(config_file_path, 'r') as file:
-            yaml_data: dict = yaml.safe_load(file)
-            self = MongoMigration(**yaml_data)
-            return self
-
+    # def Init(self: Self, config_file_path: str) -> Self:
+    #     with open(config_file_path, 'r') as file:
+    #         yaml_data: dict = yaml.safe_load(file)
+    #         self = MongoMigration(**yaml_data)
+    #         return self
+    
 # @dataclass
 @inject
 class DbClients:

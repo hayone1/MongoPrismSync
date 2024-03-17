@@ -1,6 +1,8 @@
 import os,traceback
 from kink import inject, di
+from pydantic_core import ValidationError
 import yaml
+from pydantic_yaml import parse_yaml_raw_as
 
 from mongocd.Domain.Base import *
 from mongocd.Domain.Database import MongoMigration
@@ -121,7 +123,11 @@ def inject_dependencies() -> ReturnCode:
         if isinstance(config_file_path, ReturnCode):
             return # dependencies will be None
         #else
-        mongoMigration = MongoMigration().Init(config_file_path)
+        # mongoMigration = MongoMigration().Init(config_file_path)
+        with open(config_file_path, 'r') as file:
+            yaml_data: dict = yaml.safe_load(file)
+            mongoMigration = MongoMigration(**yaml_data)
+
         clients = dict()
         for databaseConfig in mongoMigration.spec.databaseConfigs:
             required_args = [mongoMigration.spec.source_conn_string, SOURCE_PASSWORD, databaseConfig.source_authdb,databaseConfig.source_db]
@@ -151,10 +157,13 @@ def inject_dependencies() -> ReturnCode:
         return ReturnCode.DIR_ACCESS_ERROR
     except errors.ConfigurationError as ex:
         logger.error(f"{ReturnCode.TIMEOUT_ERROR}: {Messages.operation_timeout} | {ex}")
-        return ReturnCode.TIMEOUT_ERROR.value
+        return ReturnCode.TIMEOUT_ERROR
+    except ValidationError as ex:
+        logger.error(f"{ReturnCode.INVALID_CONFIG_ERROR}: Please check weaveconfig.yml for correctness | {ex}")
+        return ReturnCode.INVALID_CONFIG_ERROR
     except Exception as ex:
-        logger.fatal(f"{ReturnCode.UNKNOWN_ERROR.name}: Unknown Error occurred while {Messages.dir_validation} | {ex}")
-        return ReturnCode.UNKNOWN_ERROR.value
+        logger.fatal(f"{ReturnCode.UNKNOWN_ERROR.name}: Unknown Error occurred while {Messages.dir_validation} | {ex} | {ex.__class__}")
+        return ReturnCode.UNKNOWN_ERROR
     
     return ReturnCode.SUCCESS
     # di[IVerifyService] = VerifyService()
@@ -164,17 +173,17 @@ def inject_dependencies() -> ReturnCode:
 @inject
 def init_configs(config_folder_path: str, sanitize_config: bool,
             update_templates: bool = True, template_url: str = None,
-            logger: Logger = None, progress: Progress = None) -> int:
+            logger: Logger = None, progress: Progress = None) -> ReturnCode:
     '''Initialize the application defaults and files'''
     # config_folder_path = Path(config_folder_dir)
     # progress is already injected but needs "with" to work
     with progress as _:
-        init_file_task = progress.add_task(description="initializing config file...", total=1)
+        init_file_task = progress.add_task(description="initializing config file...", total=None)
         prismsync_config = init_config_file(config_folder_path, sanitize_config, template_url)
         #return error 
-        if isinstance(prismsync_config, int): return prismsync_config
+        if isinstance(prismsync_config, ReturnCode): return prismsync_config
         # progress.update(init_file_task, completed=True)
-        progress.remove_task(init_file_task)
+        progress.update(init_file_task, completed=True)
         print("[green]✓[/green] configfile initialization successful")
 
     #download templates
@@ -186,7 +195,7 @@ def init_configs(config_folder_path: str, sanitize_config: bool,
                                     template_abs_folder)
             if extract_successful == False:
                 return ReturnCode.EXTRACT_FILE_ERROR
-            progress.remove_task(zip_task)
+            progress.update(zip_task, completed=True)
             print("[green]✓[/green] template update successful")
         
     #init output folder
@@ -198,7 +207,9 @@ def init_configs(config_folder_path: str, sanitize_config: bool,
 
 @staticmethod
 @inject
-def init_config_file(config_folder_path: str, logger: Logger, sanitize_config: bool = False, template_url: str = None) -> int | MongoMigration:
+def init_config_file(config_folder_path: str, sanitize_config: bool = False,
+                    template_url: str = None, logger: Logger =  None
+                    ) -> ReturnCode | MongoMigration:
     '''Initialize configuration file'''
     # print("Init config file called")
     # print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -231,8 +242,11 @@ def init_config_file(config_folder_path: str, logger: Logger, sanitize_config: b
         os.environ[Constants.config_folder_key] = config_folder
         return migration_config_data
     except OSError as ex:
-        logger.error(f"{ReturnCode.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.write_file}, {config_folder_path} | {ex}")
+        logger.fatal(f"{ReturnCode.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.write_file}, {config_folder_path} | {ex}")
         return ReturnCode.DIR_ACCESS_ERROR
+    except ValidationError as ex:
+        logger.fatal(f"{ReturnCode.INVALID_CONFIG_ERROR}: Please check weaveconfig.yml for correctness | {ex}")
+        return ReturnCode.INVALID_CONFIG_ERROR
     except Exception as ex:
         logger.fatal(f"{ReturnCode.DIR_ACCESS_ERROR.name}: Unknown Error occurred while {Messages.write_file}, {config_folder_path} | {ex} | {traceback.format_exc()}")
         return ReturnCode.DIR_ACCESS_ERROR
