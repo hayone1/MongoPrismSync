@@ -113,7 +113,7 @@ class DatabaseService(IDatabaseService):
                 create_collection_command = self.generate_createcollection_command(databaseConfig.destination_db, collection_property.name)
                 self.commandsList.databaseScript.append(create_collection_command)
                 #add utility functions to all collection scripts
-                commandsList.collectionScript[collection_property.name].append(db_utils_commands)
+                # commandsList.collectionScript[collection_property.name].append(db_utils_commands)
 
             #add command to replicate source collections indices to destination collections
             if (databaseConfig.create_index == True):
@@ -154,7 +154,7 @@ class DatabaseService(IDatabaseService):
             async with asyncio.TaskGroup() as tgrp:
                 formDocumentsDataTasks = [
                     tgrp.create_task(
-                        self.collection_service.form_documentsdata_async(databaseConfig, collection_property, database_folder)
+                        self.collection_service.form_documentsdata_async(databaseConfig, collection_property, database_folder, db_utils_commands)
                     ) for collection_property in collection_properties
                 ]
             if any(tsk.result() != ReturnCode.SUCCESS for tsk in formDocumentsDataTasks):

@@ -19,7 +19,8 @@ class CollectionService():
             self.clients = clients
 
     async def form_documentsdata_async(self, databaseConfig: DatabaseConfig,
-            collection_property: CollectionProperty, database_folder: str) -> ReturnCode:
+            collection_property: CollectionProperty, database_folder: str,
+            top_level_commands: str) -> ReturnCode:
         #important! progress will only show if calling code is within a progress 'with' resource
         progress = self.progress
         # with progress:
@@ -63,6 +64,7 @@ class CollectionService():
                 #write the generated document-level query to a file
                 documentFile = f'{collection_folder}/{documents_data.filename}.js'
                 with open(documentFile, 'w+') as document_file:
+                    document_file.write(top_level_commands)
                     document_file.write(compare_insert_command)
 
             utils.complete_richtask(

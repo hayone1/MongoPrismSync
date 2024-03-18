@@ -21,7 +21,8 @@ class ICollectionService:
 
     # @abstractmethod
     async def form_documentsdata_async(self, databaseConfig: DatabaseConfig,
-            collection_property: CollectionProperty, database_folder: str) -> ReturnCode:
+            collection_property: CollectionProperty, database_folder: str,
+            top_level_commands: str) -> ReturnCode:
         pass
 
     
