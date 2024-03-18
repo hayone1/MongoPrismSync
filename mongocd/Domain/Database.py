@@ -3,7 +3,7 @@ from logging import Logger
 import json, yaml, base64
 from kink import inject
 import os, re, tempfile
-from typing import Self
+from typing import Self, Type, TypeVar
 from collections import defaultdict
 from dataclasses import dataclass
 from mongocd.Core import utils
@@ -13,7 +13,7 @@ from pymongo.database import Database
 
 from mongocd.Domain.Base import Constants, CustomResource, Messages, ReturnCode
 
-
+T = TypeVar('T')
 class CreateIndexOptions:
     ADD = "add"
     REPLACE = "replace"
@@ -24,8 +24,8 @@ class CollectionCommand(BaseModel):
     name: str = "*"
     command: str = "*"
 
-class CollectionData():
-    unique_fields: dict
+class CollectionData(BaseModel):
+    key: dict
     value: dict
     filename: str
 
@@ -228,11 +228,11 @@ class DbClients:
         except Exception as ex:
             self.logger.error(f"Unable to load --eval result. Check your connection string/parameters and connectivity: {self.shclient} | {ex}")
             return result
-    async def ShCommandAsync(self, command: str) -> dict | ReturnCode:
+    async def ShCommandAsync(self, command: str, return_type: Type[T] = None) -> T | dict | ReturnCode:
         '''
         Runs command asynchronously using mongosh installed on system
-        remarks: quote commands using double quotes and any internal part
-        of the command with single quotes
+        and returns as dict or casts to specified type
+        remarks: quote any internal part the command with single quotes
         '''
         full_command = self.shclientAsync + ['--eval', command]
         process = await asyncio.create_subprocess_exec(
@@ -245,7 +245,19 @@ class DbClients:
 
         # Check the return code
         if process.returncode == 0:
-            return json.loads(stdout.decode().rstrip())
+            result = json.loads(stdout.decode().rstrip())
+            #cast the result to the return_type if specified
+            if return_type != None:
+                try:
+                    # Attempt to convert the dictionary to the target type
+                    if isinstance(result, list):
+                        return [return_type(**dict_result) for dict_result in result]
+                    else:
+                        return return_type(**result)
+                except (TypeError, ValueError) as ex:
+                    self.logger.error(f"Error converting data to type {return_type} | {ex}")
+            # return as-is
+            return result
         else:
             self.logger.error(f"Error occurred in ShCommandAsync {full_command} | {stdout.decode().rstrip()} |{stderr.decode().rstrip()}")
             return ReturnCode.DB_ERROR

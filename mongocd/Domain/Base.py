@@ -31,7 +31,7 @@ class Messages:
     folder_inaccessible = "folder not found or inaccessible"
     envvar_inaccessible = "environment variable not found or inaccessible"
     specvalue_missing = "config spec value is missing or inaccessibe. Could it be a typo?"
-    operation_timeout = "timeout while fetching resource or performing operation."
+    operation_timeout = "timeout while fetching resource or performing operation. Are you connected to a VPN?"
     empty_notallowed = "cannot be empty or null."
 
 class Constants:
