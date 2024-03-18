@@ -13,7 +13,7 @@ env:
     # LATEST_VERSION: v1alpha1
     RELEASE_README: docs/RELEASE.md
 jobs:
-  create-release:
+  build-release-template:
     runs-on: ubuntu-latest
     if: contains(github.event.head_commit.message, '[template]')
     steps:
@@ -25,3 +25,61 @@ jobs:
           ls
           echo "$TEMPLATE_FOLDER_PATH"
           if [ ! -d "$TEMPLATE_FOLDER_PATH" ]; then echo "Error: Folder path is not defined"; fi
+
+      - name: Find latest subfolder
+        shell: bash
+        id: get_latest_subfolder
+        run: |
+          # latest_subfolder=$(ls -1 -t $TEMPLATE_FOLDER_PATH | grep "^d" | head -n1)
+          latest_subfolder=$(ls -d $TEMPLATE_FOLDER_PATH/*/ | sort -r | head -n 1 | cut -d'/' -f2)
+          echo "LATEST_SUBFOLDER=${latest_subfolder}" >> "$GITHUB_ENV"
+
+      - name: Zip subfolder
+        run: |
+          curr_dir=$(pwd)
+          # cd into the directory that constins the files
+          (cd $TEMPLATE_FOLDER_PATH/${LATEST_SUBFOLDER}; zip -r "${curr_dir}/templates_${LATEST_SUBFOLDER}.zip" *)
+          echo "ZIP_PATH=${curr_dir}/templates_${LATEST_SUBFOLDER}.zip" >> "$GITHUB_ENV"
+
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        # uses: actions/create-release@v1
+        with:
+          name: mongocd
+          allowUpdates: true
+          artifacts: "templates_${{ env.LATEST_SUBFOLDER }}.zip"
+          tag: "${{ env.LATEST_SUBFOLDER }}_${{ env.LATEST_TAG }}"
+          bodyFile: ${{ env.RELEASE_README }}
+          # draft: true
+          prerelease: true
+          # removeArtifacts: true
+          omitDraftDuringUpdate: true
+          makeLatest: true
+  
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Validate Folder Exists
+        shell: bash
+        run: |
+          if [ ! -d "$TEMPLATE_FOLDER_PATH" ]; then echo "Error: Folder path ${TEMPLATE_FOLDER_PATH} is not defined"; fi
+
+      - name: Set up Python
+        # This is the version of the action for setting up Python, not the Python version.
+        uses: actions/setup-python@v4
+        with:
+          # Semantic version range syntax or exact version of a Python version
+          python-version: '3.12.0'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+          cache: 'pipenv'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install pipenv
+          pipenv install
+      - name: Run tests
+        run: |
+          pipenv run pytest $TESTS_PATH -s
