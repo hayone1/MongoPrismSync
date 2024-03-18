@@ -60,7 +60,7 @@ def init_logger() -> Logger:
 def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCode | MongoMigration:
     '''Validate that working directory has the minimum capabilities
     for a successful weave.'''
-    logger.info(f"{Messages.dir_validation}: {config_folder_path}")
+    logger.debug(f"{Messages.dir_validation}: {config_folder_path}")
 
     if not os.path.exists(config_folder_path):
         logger.warning(
@@ -96,11 +96,7 @@ def inject_dependencies() -> ReturnCode:
     )
 
     di[Logger] = lambda x: logger
-    di.factories[Progress] = lambda x: Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"), 
-        transient=True
-    )
+    di[Progress] = progress
 
     CONFIG_FOLER_PATH = utils.get_full_path(
         os.getenv(Constants.config_folder_key, Constants.default_folder))
@@ -112,7 +108,8 @@ def inject_dependencies() -> ReturnCode:
                        {Constants.config_folder_key} or {Constants.mongo_source_pass} is not set. {Messages.run_init}""")
     #Dependency Injection
     try:
-        config_file_path = validate_workingdir(CONFIG_FOLER_PATH, di[Logger])
+        with progress:
+            config_file_path = validate_workingdir(CONFIG_FOLER_PATH, di[Logger])
 
         #start out as null, dependencies need to be injected the order given
         mongoMigration: MongoMigration = None; di.factories[MongoMigration] = lambda x: mongoMigration
@@ -145,10 +142,10 @@ def inject_dependencies() -> ReturnCode:
         
         #no need to validate existence of folder as validate_workingdir would have done that
         template_abs_folder = f"{CONFIG_FOLER_PATH}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
-        templates = Environment(loader=FileSystemLoader(template_abs_folder))
+        templates = Environment(loader=FileSystemLoader(template_abs_folder), enable_async=True)
 
         collectionService = CollectionService(templates, mongoMigration, clients)
-        databaseService = DatabaseService(templates, config_file_path, clients,
+        databaseService = DatabaseService(templates, CONFIG_FOLER_PATH, clients,
                                           mongoMigration.spec.databaseConfigs, collectionService)
             # print("ok")
 
@@ -177,26 +174,25 @@ def init_configs(config_folder_path: str, sanitize_config: bool,
     '''Initialize the application defaults and files'''
     # config_folder_path = Path(config_folder_dir)
     # progress is already injected but needs "with" to work
-    with progress as _:
+    with progress:
         init_file_task = progress.add_task(description="initializing config file...", total=None)
         prismsync_config = init_config_file(config_folder_path, sanitize_config, template_url)
         #return error 
         if isinstance(prismsync_config, ReturnCode): return prismsync_config
         # progress.update(init_file_task, completed=True)
-        progress.update(init_file_task, completed=True)
-        print("[green]✓[/green] configfile initialization successful")
+        # progress.update(init_file_task, advance=1,completed=True)
+        utils.complete_richtask(init_file_task, "configfile initialization successful")
 
     #download templates
     template_abs_folder = f"{config_folder_path}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
     if update_templates:
-        with progress as _:
+        with progress:
             zip_task = progress.add_task(description="updating templates...", total=None)
             extract_successful = utils.download_and_extract_zip(prismsync_config.spec.remote_template,
                                     template_abs_folder)
             if extract_successful == False:
                 return ReturnCode.EXTRACT_FILE_ERROR
-            progress.update(zip_task, completed=True)
-            print("[green]✓[/green] template update successful")
+            utils.complete_richtask(zip_task, "template update successful")
         
     #init output folder
     os.makedirs(f"{config_folder_path}/{FileStructure.OUTPUTFOLDER.value}", exist_ok=True)

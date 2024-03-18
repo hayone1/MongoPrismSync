@@ -8,6 +8,8 @@ import traceback
 from zipfile import ZipFile
 from kink import di, inject
 from requests.exceptions import *
+from rich.progress import Progress, TaskID
+from rich import print
 
 
 import requests
@@ -45,6 +47,28 @@ def get_full_path(input_path) -> str:
         full_path = os.path.abspath(os.path.join(current_directory, input_path))
         return full_path
     
+@staticmethod
+@inject
+def complete_richtask(task_id: TaskID, description: str, progress: Progress = None):
+    '''replaces task with completed message.
+    progress object is gotten from injected Progress.
+    
+    Throws error if progress object is not injected'''
+    progress.update(task_id, completed=True)
+    progress.remove_task(task_id)
+    # progress.stop()
+    print(f"[green]✓[/green] {description}")
+
+def fault_richtask(task_id: TaskID, description: str, progress: Progress = None):
+    '''replaces task with faulted message.
+    progress object is gotten from injected Progress.
+    
+    Throws error if progress object is not injected'''
+    progress.update(task_id, completed=True)
+    progress.remove_task(task_id)
+    # progress.stop()
+    print(f"[red]x[/red] {description}")
+
 @staticmethod
 def download_and_extract_zip(zip_url: str, extract_folder: str) -> bool:
     '''Download and extract a zip file to specified folder

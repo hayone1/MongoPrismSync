@@ -60,10 +60,11 @@ def init(
     if config_folder_path is None:
         config_folder_path = typer.prompt("Enter path of working directory(absolute/relative): ")
 
-    init_config_result = mongocd_config.init_configs(config_folder_path, sanitize_config, update_templates, template_url)
+    init_config_result = mongocd_config.init_configs(config_folder_path, sanitize_config,
+                                                     update_templates, template_url)
     if init_config_result != ReturnCode.SUCCESS:
         raise typer.Exit(init_config_result.value)
-    print(f"Completed {mongocd_config.__app_name__} {init.__name__}")
+    print(f"Completed: {mongocd_config.__app_name__} {init.__name__}")
 
 @app.command()
 def weave(
@@ -81,15 +82,15 @@ def weave(
     )
 ):
     '''Pull data from source database and apply transformations based on given configuration'''
+    print(f"Starting: {mongocd_config.__app_name__} {weave.__name__}")
     reload_dependencies = False
     if os.getenv(Constants.config_folder_key) is None:
         reload_dependencies = True
-        # print(f"[yellow]Neither {}")
         #set both config_folder_path and the env variable
         os.environ[Constants.config_folder_key] = config_folder_path = \
             (config_folder_path 
              or typer.prompt("Working dirctory not set. Enter path of working directory(absolute/relative)"))
-        reload_dependencies = True
+        
     if os.getenv(Constants.mongo_source_pass) is None:
         reload_dependencies = True
         #set both source_password and the env variable
@@ -101,11 +102,12 @@ def weave(
     if reload_dependencies == True:
         # utils.reload_program(mongocd_config.__app_name__, app)
         inject_result = mongocd_config.inject_dependencies()
-        if inject_result == ReturnCode.SUCCESS:
-            global mongoMigration; mongoMigration = di[MongoMigration]
-            global verifyService; verifyService = di[IVerifyService]
-        # weave()
-        # sys.exit()
+        # these feel redundant, but I cant seem to simulate a get accessor correctly in python
+        if inject_result != ReturnCode.SUCCESS:
+            typer.Exit(inject_result)
+        global mongoMigration; mongoMigration = di[MongoMigration]
+        global verifyService; verifyService = di[IVerifyService]
+        global databaseService; databaseService = di[IDatabaseService]
 
     if verifyService is None:
         raise typer.Exit(ReturnCode.UNINITIALIZED.value)
@@ -118,8 +120,10 @@ def weave(
     if verify_database != ReturnCode.SUCCESS:
         raise typer.Exit(ReturnCode.DB_ACCESS_ERROR.value)
     print("[green] Connection to database established Successfully!")
+    
+    asyncio.run(databaseService.generate_syncscripts_async())
 
-    databaseService.generate_syncscripts_async()
+    print(f"Completed: {mongocd_config.__app_name__} {weave.__name__}")
     #VerifyDatabases
     
     

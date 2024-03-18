@@ -1,14 +1,8 @@
 
 var dbName = '{{ db_name }}';
 var collName = '{{ coll_name }}';
-// This is/are the index Field(s) that can be used to uniquely
-//identify a document
+// This is/are the index Field(s) that can be used to uniquely identify a document
 var uniqueIndexFields = {{ unique_index_fields }};  // Replace with your actual index name
-
-// Get information about the specified index
-// var indexInfo = db.getSiblingDB(dbName)[collName].getIndexes().filter(function(index) {
-//     return index.name === indexName;
-// })[0].key;
 
 //generate dictionary from the keys
 var indexKeys = {};
@@ -27,7 +21,7 @@ var data = db.getSiblingDB(dbName)[collName].aggregate([
     }
 ]);
 //final data
-result = data.map(function (dt) {dt["filename"] = Object.values(dt["unique_fields"]).join("|"); return dt} );
+result = data.map(function (dt) {dt["filename"] = Object.values(dt["key"]).join("|"); return dt} );
 //printjson(result);
 // EJSON.serialize(result.toArray());
 printjson(EJSON.stringify(result.toArray()));

@@ -2,10 +2,12 @@
 from logging import Logger
 from kink import inject
 from jinja2 import Environment
+import typer
 from mongocd.Domain.Base import FileStructure, TemplatesFiles
 from mongocd.Domain.Database import *
 from mongocd.Interfaces.Services import ICollectionService, IDatabaseService
 from accessify import implements, private
+from rich.progress import Progress
 
 #inject is incompatible with implements
 # @implements(IDatabaseService)
@@ -14,15 +16,17 @@ class DatabaseService(IDatabaseService):
     
     def __init__(self, templates: Environment, config_folder_path: str, 
                 clients: dict[str, DbClients], databaseConfigs: list[DatabaseConfig],
-                collection_service: ICollectionService, logger: Logger = None):
+                collection_service: ICollectionService, logger: Logger = None, progress: Progress = None):
             
             self.logger = logger
+            self.progress = progress
             self.templates = templates
             self.clients = clients
             self.collection_service = collection_service
             self.output_folder = f"{config_folder_path}/{FileStructure.OUTPUTFOLDER.value}"
             self.databaseConfigs = databaseConfigs
             self.commandsList: DatabaseSyncScripts = DatabaseSyncScripts()
+
 
     @private
     async def generate_indexreplication_commandasync(self, databaseConfig: DatabaseConfig) -> str | ReturnCode:
@@ -44,10 +48,10 @@ class DatabaseService(IDatabaseService):
                         )
                     )for collection_property in databaseConfig.collections_config.properties
                 ]
-                source_collection_indices = [tsk.result() for tsk in get_indices_tasks]
+            source_collection_indices = [tsk.result() for tsk in get_indices_tasks]
                 
             index_replication_template = self.templates.get_template(TemplatesFiles.copyIndices)
-            index_replication_command = index_replication_template.render(
+            index_replication_command = await index_replication_template.render_async(
                 {
                     Constants.db_name: databaseConfig.destination_db,
                     Constants.source_collections_indices: source_collection_indices
@@ -85,18 +89,19 @@ class DatabaseService(IDatabaseService):
             }
         )
         return delete_duplicate_collections_commands
-
-    async def generate_syncscripts_async(self):
+    
+    async def generate_syncscripts_async(self) -> ReturnCode:
         logger = self.logger
+        progress = self.progress
         commandsList = self.commandsList
 
         for databaseConfig in self.databaseConfigs:
             if databaseConfig.skip == True:
                 logger.warning(f"DatabaseConfig [{databaseConfig.name}]: skip set to true, skipping...")
-                return
+                continue
 
             #add utility functions and pre-collection commands to database script
-            db_utils_commands = self.templates.get_template(TemplatesFiles.utils).render()
+            db_utils_commands = await self.templates.get_template(TemplatesFiles.utils).render_async()
             commandsList.databaseScript.append(db_utils_commands)
             commandsList.databaseScript.append(databaseConfig.preCollectionCommands)
             
@@ -110,6 +115,8 @@ class DatabaseService(IDatabaseService):
             #add command to replicate source collections indices to destination collections
             if (databaseConfig.create_index == True):
                 replicate_indices_commands = await self.generate_indexreplication_commandasync(databaseConfig)
+                #didnt want to usee a raise
+                if isinstance(replicate_indices_commands, ReturnCode): typer.Exit(replicate_indices_commands.value)
                 commandsList.databaseScript.append(replicate_indices_commands)
 
             # add commands to duplicate collections(+ their indices) in the destination db for backup purposes

@@ -139,7 +139,7 @@ class DatabaseConfig(BaseModel):
                                 for pattern in exclusion_list])]
 
         existing_collection_properties = {prop.name: prop for prop in self.collections_config.properties}
-        logger.info(f"database: {self.name} | collections: {collection_names}")
+        logger.info(f"database: {self.source_db} | collections: {collection_names}")
 
         # set collection properties
         for collection_name in collection_names:
@@ -160,8 +160,7 @@ class DatabaseConfig(BaseModel):
         
 
         for property in self.collections_config.properties:
-            logger.debug(f"database: {self.name}, collection: {property.name}, indices: {property.indices}, excludeIndices: {property.excludeIndices}, unique_index_fields: {property.unique_index_fields}")
-            # logger.debug(f"database: {self.name}, indices: {property.indices}")
+            logger.debug(f"database: {self.source_db}, collection: {property.name}, indices: {property.indices}, excludeIndices: {property.excludeIndices}, unique_index_fields: {property.unique_index_fields}")
         return ReturnCode.SUCCESS
 
 
@@ -248,7 +247,7 @@ class DbClients:
         if process.returncode == 0:
             return json.loads(stdout.decode().rstrip())
         else:
-            self.logger.error(f"Error occurred in ShCommandAsync {full_command} | {stderr.decode().rstrip()}")
+            self.logger.error(f"Error occurred in ShCommandAsync {full_command} | {stdout.decode().rstrip()} |{stderr.decode().rstrip()}")
             return ReturnCode.DB_ERROR
         # return json.loads(result)
     def ShFileCommand (self, command: str):

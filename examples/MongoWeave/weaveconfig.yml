@@ -11,8 +11,8 @@ spec:
       properties: []
       skipCollections: []
     create_index: true
-    destination_db: 'dample_dest'
-    name: 'sample'
+    destination_db: dample_dest
+    name: sample
     postCollectionCommands: 'db.runCommand({ ping: 1 });'
     preCollectionCommands: 'db.runCommand({ ping: 1 });'
     replicate_mode: commanddocument
@@ -20,9 +20,9 @@ spec:
       commands: []
       database: false
     skip: false
-    source_authdb: 'admin'
-    source_db: 'sample_guides'
+    source_authdb: admin
+    source_db: sample_guides
   destination_conn_string: ''
   remote_template: https://github.com/hayone1/MongoPrismSync/releases/download/v1alpha1_v0.0.1/templates_v1alpha1.zip
   secretVars: {}
-  source_conn_string: 'mongodb+srv://mongocd@mongocd.ymkddtx.mongodb.net/admin?replicaSet=atlas-11nj50-shard-0&readPreference=primary&srvServiceName=mongodb&connectTimeoutMS=10000&authSource=admin&authMechanism=SCRAM-SHA-1'
+  source_conn_string: mongodb+srv://mongocd@mongocd.ymkddtx.mongodb.net/admin?replicaSet=atlas-11nj50-shard-0&readPreference=primary&srvServiceName=mongodb&connectTimeoutMS=10000&authSource=admin&authMechanism=SCRAM-SHA-1

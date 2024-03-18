@@ -32,65 +32,70 @@ class VerifyService(IVerifyService):
         # source_password = self.mongoMigration.spec.secretVars['stringData']['source_password']
         # destination_password = self.mongoMigration.spec.secretVars['destination_password']
 
-        self.logger.info("verify mongodb connectivity")
+        print("Starting: verify mongodb connectivity")
         # errored_database_clients = []
         # success_database_clients = []
-        for db, client in self.clients.items():
-            try:
-                pyclient_task = progress.add_task(description="verifying pyclient connectivity...", total=1)
-                pymongoCheck = client.pyclient.command('ping')
-                progress.update(pyclient_task, completed=True, description="[green]✓[/green]pyclient connectivity successful")
+        try:
+            for db, client in self.clients.items():
+                with progress: 
+                    pyclient_task = progress.add_task(description="verifying pyclient connectivity...", total=1)
+                    pymongoCheck = client.pyclient.command('ping')
 
-                shclient_task = progress.add_task(description="verifying shclient connectivity...", total=1)
-                mongoshCheck = client.ShCommand("db.runCommand({ ping: 1 });")
-                progress.update(shclient_task, completed=True, description="[green]✓[/green]pyclient connectivity successful")
-
+                    shclient_task = progress.add_task(description="verifying shclient connectivity...", total=1)
+                    mongoshCheck = client.ShCommand("db.runCommand({ ping: 1 });")
                     
-                # print(pymongoCheck)
-                # print(mongoshCheck)
-                #the commands above will also print their own outcome, so no need to add it to below log
-                if (pymongoCheck['ok'] < 1 or mongoshCheck['ok']['$numberInt'] != '1'):
-                    self.logger.error(f"""{ReturnCode.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string} 
-                                      | password: {source_password},
-                                      Check that the details are correct and you have network access to the database.""")
-                    return ReturnCode.DB_ACCESS_ERROR
-            except Exception as ex:
-                    self.logger.error(f"""{ReturnCode.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string} 
-                                      | password: {source_password} | {ex}""")
-                    return ReturnCode.DB_ACCESS_ERROR
+                    #the commands above will also print their own outcome, so no need to add it to below log
+                    if (pymongoCheck['ok'] < 1 or mongoshCheck['ok']['$numberInt'] != '1'):
+                        self.logger.error(f"""{ReturnCode.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string} 
+                                        | password: {source_password},
+                                        Check that the details are correct and you have network access to the database.""")
+                        return ReturnCode.DB_ACCESS_ERROR
+                    utils.complete_richtask(pyclient_task, "py connectivity successful")
+                    utils.complete_richtask(shclient_task, "sh connectivity successful")
+        except Exception as ex:
+            self.logger.error(f"""{ReturnCode.DB_ACCESS_ERROR}: Failed connecting to database {source_conn_string} 
+                                | password: {source_password} | {ex}""")
+            return ReturnCode.DB_ACCESS_ERROR
 
-            # print(f"source: {databaseConfig.destination_db}", self.clients[databaseConfig.name].destination_client[databaseConfig.destination_db].command('ping'))
-            
-        self.logger.info("Successfully connected to source mongodb")
+        print("Completed: verify mongodb connectivity")
         return ReturnCode.SUCCESS
 
     def verify_databases(self) -> ReturnCode:
         databaseConfigs = self.mongoMigration.spec.databaseConfigs
-
+        progress = self.progress
         #list of databases that had connectivity issues
         errored_databases = []
         success_databases = []
-        for databaseConfig in databaseConfigs:
-            self.logger.info(f"verify databases connectivity: {databaseConfig.name}")
-            if self.clients == None:
-                print("[red] Pre-requisites not met to verify database. Please fill in correct details in the weaveconfig.yml")
-                return ReturnCode.INVALID_CONFIG_ERROR
-            if databaseConfig.skip == True:
-                self.logger.warning(f"[{databaseConfig.name}]: skip set to true, skipping...")
-                continue
-            source_db = self.clients[databaseConfig.name].pyclient
-            # destination_db = self.clients[databaseConfig.name].source_client[databaseConfig.destination_db]
-            if databaseConfig.SetCollectionConfig(source_db) != ReturnCode.SUCCESS:
-                errored_databases.append(databaseConfig.name)
-                continue
-            success_databases.append(databaseConfig.name)
-            # databaseConfig.collections_config.properties collection_names
+        print("Starting: verify database")
+        with progress:
+            for databaseConfig in databaseConfigs:
+                self.logger.debug(f"verify databases connectivity: {databaseConfig.name}")
+
+                if self.clients == None:
+                    self.logger.error("Pre-requisites not met to verify database. Please fill in correct details in the weaveconfig.yml")
+                    return ReturnCode.INVALID_CONFIG_ERROR
+                if databaseConfig.skip == True:
+                    print(f"[yellow]-[/yellow] Skipping: {databaseConfig.name}")
+                    continue
+
+                database_verify_task = progress.add_task(description=f"verifying database: {databaseConfig.source_db}", total=None)
+                source_db = self.clients[databaseConfig.name].pyclient
+                # destination_db = self.clients[databaseConfig.name].source_client[databaseConfig.destination_db]
+                if databaseConfig.SetCollectionConfig(source_db) != ReturnCode.SUCCESS:
+                    errored_databases.append(databaseConfig.name)
+                    utils.fault_richtask(database_verify_task, f"failed to verify database: {databaseConfig.source_db}")
+                    continue
+                success_databases.append(databaseConfig.name)
+                utils.complete_richtask(database_verify_task, f"verified database: {databaseConfig.source_db}")
+        
         if len(errored_databases) > 0:
             self.logger.warn(f"databases with connection errors: {errored_databases}")
-        
-        if len(success_databases) > 0:
-            self.logger.info(f"successfully connected to some or all databases: {success_databases}")
-            return ReturnCode.SUCCESS
-        else:
+        if len(success_databases) == 0:
             return ReturnCode.DB_ACCESS_ERROR
+        
+        self.logger.debug(f"successfully connected to some or all databases: {success_databases}")
+        print("Completed: verify mongodb connectivity")
+        return ReturnCode.SUCCESS
+        
+        
         # destination_collections = source_db.list_collection_names(filter=filter)
