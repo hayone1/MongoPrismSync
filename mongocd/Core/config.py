@@ -88,15 +88,21 @@ def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCode 
     
 @staticmethod
 def inject_dependencies() -> ReturnCode:
-    logger = init_logger()
-    progress = Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"), 
-        transient=False
-    )
+    '''
+    instantiate dependencies needed for app
+    '''
+    
+    if Logger not in di:
+        di[Logger] = init_logger()
 
-    di[Logger] = lambda x: logger
-    di[Progress] = progress
+    if Progress not in di:
+        di[Progress] = Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"), 
+            transient=False
+        )
+    logger = di[Logger]
+    progress = di[Progress]
 
     CONFIG_FOLER_PATH = utils.get_full_path(
         os.getenv(Constants.config_folder_key, Constants.default_folder))
@@ -106,16 +112,15 @@ def inject_dependencies() -> ReturnCode:
     if (CONFIG_FOLER_PATH is None or SOURCE_PASSWORD is None):
         logger.warning(f"""{ReturnCode.UNINITIALIZED.name}: Required environment variables 
                        {Constants.config_folder_key} or {Constants.mongo_source_pass} is not set. {Messages.run_init}""")
-    #Dependency Injection
     try:
         with progress:
             config_file_path = validate_workingdir(CONFIG_FOLER_PATH, di[Logger])
 
         #start out as null, dependencies need to be injected the order given
-        mongoMigration: MongoMigration = None; di.factories[MongoMigration] = lambda x: mongoMigration
-        clients: dict[str, DbClients] = None; di.factories["clients"] = lambda x: clients
-        verifyService: IVerifyService = None; di.factories[IVerifyService] = lambda x: verifyService
-        databaseService: IDatabaseService = None; di.factories[IDatabaseService] = lambda x: databaseService
+        di[MongoMigration] = None
+        di["clients"] = None
+        di[IVerifyService] = None
+        di[IDatabaseService] = None
         #if validation was sucessful, i.e it returned the config_file_path instead of a return code
         if isinstance(config_file_path, ReturnCode):
             return # dependencies will be None
@@ -123,30 +128,31 @@ def inject_dependencies() -> ReturnCode:
         # mongoMigration = MongoMigration().Init(config_file_path)
         with open(config_file_path, 'r') as file:
             yaml_data: dict = yaml.safe_load(file)
-            mongoMigration = MongoMigration(**yaml_data)
+            di[MongoMigration] = MongoMigration(**yaml_data)
 
-        clients = dict()
-        for databaseConfig in mongoMigration.spec.databaseConfigs:
-            required_args = [mongoMigration.spec.source_conn_string, SOURCE_PASSWORD, databaseConfig.source_authdb,databaseConfig.source_db]
+        di["clients"] = dict()
+        for databaseConfig in di[MongoMigration].spec.databaseConfigs:
+            required_args = [di[MongoMigration].spec.source_conn_string, SOURCE_PASSWORD,
+                            databaseConfig.source_authdb,databaseConfig.source_db]
             
             #if any of the required parameters to form the clients are not present 
             #then dont form the clients for this iteration
             if None in required_args or '' in required_args:
                 continue
             #else
-            clients[databaseConfig.name] = DbClients(
-                source_conn_string=mongoMigration.spec.source_conn_string, source_password=SOURCE_PASSWORD, 
+            di["clients"][databaseConfig.name] = DbClients(
+                source_conn_string=di[MongoMigration].spec.source_conn_string, source_password=SOURCE_PASSWORD, 
                 authSource=databaseConfig.source_authdb, source_db=databaseConfig.source_db)
         
-        verifyService = VerifyService(mongoMigration, clients)
+        di[IVerifyService] = VerifyService(di[MongoMigration], di["clients"])
         
         #no need to validate existence of folder as validate_workingdir would have done that
         template_abs_folder = f"{CONFIG_FOLER_PATH}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
         templates = Environment(loader=FileSystemLoader(template_abs_folder), enable_async=True)
 
-        collectionService = CollectionService(templates, mongoMigration, clients)
-        databaseService = DatabaseService(templates, CONFIG_FOLER_PATH, clients,
-                                          mongoMigration.spec.databaseConfigs, collectionService)
+        collectionService = CollectionService(templates, di[MongoMigration], di["clients"])
+        di[IDatabaseService] = DatabaseService(templates, CONFIG_FOLER_PATH, di["clients"],
+                                          di[MongoMigration].spec.databaseConfigs, collectionService)
             # print("ok")
 
     except OSError as ex:
@@ -165,6 +171,13 @@ def inject_dependencies() -> ReturnCode:
     return ReturnCode.SUCCESS
     # di[IVerifyService] = VerifyService()
 
+# @staticmethod
+# @inject
+# def refresh_dependencies() -> ReturnCode:
+    # skip logger
+    # skip progress
+
+
 
 @staticmethod
 @inject
@@ -174,25 +187,25 @@ def init_configs(config_folder_path: str, sanitize_config: bool,
     '''Initialize the application defaults and files'''
     # config_folder_path = Path(config_folder_dir)
     # progress is already injected but needs "with" to work
-    with progress:
-        init_file_task = progress.add_task(description="initializing config file...", total=None)
-        prismsync_config = init_config_file(config_folder_path, sanitize_config, template_url)
-        #return error 
-        if isinstance(prismsync_config, ReturnCode): return prismsync_config
-        # progress.update(init_file_task, completed=True)
-        # progress.update(init_file_task, advance=1,completed=True)
-        utils.complete_richtask(init_file_task, "configfile initialization successful")
+    # with progress:
+    init_file_task = progress.add_task(description="initializing config file...", total=None)
+    prismsync_config = init_config_file(config_folder_path, sanitize_config, template_url)
+    #return error 
+    if isinstance(prismsync_config, ReturnCode): return prismsync_config
+    # progress.update(init_file_task, completed=True)
+    # progress.update(init_file_task, advance=1,completed=True)
+    utils.complete_richtask(init_file_task, "configfile initialization successful")
 
     #download templates
     template_abs_folder = f"{config_folder_path}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
     if update_templates:
-        with progress:
-            zip_task = progress.add_task(description="updating templates...", total=None)
-            extract_successful = utils.download_and_extract_zip(prismsync_config.spec.remote_template,
-                                    template_abs_folder)
-            if extract_successful == False:
-                return ReturnCode.EXTRACT_FILE_ERROR
-            utils.complete_richtask(zip_task, "template update successful")
+        # with progress:
+        zip_task = progress.add_task(description="updating templates...", total=None)
+        extract_successful = utils.download_and_extract_zip(prismsync_config.spec.remote_template,
+                                template_abs_folder)
+        if extract_successful == False:
+            return ReturnCode.EXTRACT_FILE_ERROR
+        utils.complete_richtask(zip_task, "template update successful")
         
     #init output folder
     os.makedirs(f"{config_folder_path}/{FileStructure.OUTPUTFOLDER.value}", exist_ok=True)

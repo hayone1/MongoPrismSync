@@ -31,7 +31,7 @@ class Messages:
     folder_inaccessible = "folder not found or inaccessible"
     envvar_inaccessible = "environment variable not found or inaccessible"
     specvalue_missing = "config spec value is missing or inaccessibe. Could it be a typo?"
-    operation_timeout = "timeout while fetching resource or performing operation. Are you connected to a VPN?"
+    operation_timeout = "timeout while fetching resource or performing operation. make sure you're connected to the right public Network or VPN."
     empty_notallowed = "cannot be empty or null."
 
 class Constants:
@@ -50,6 +50,7 @@ class Constants:
     unique_index_fields = 'unique_index_fields'
     source_data_json = 'source_data_json'
     unique_fields = 'unique_fields'
+    rich_completed = '[green]◉[/green] Completed:'
     # js = '.js'
 
 LOG_LEVEL_MAP = {

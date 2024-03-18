@@ -8,12 +8,14 @@ from mongocd.Core import config as mongocd_config
 from logging import Logger
 from mongocd.Interfaces.Services import *
 from rich import print
+from rich.progress import Progress
 
 app = typer.Typer()
 logger = di[Logger]
 mongoMigration = di[MongoMigration]
 verifyService = di[IVerifyService]
 databaseService = di[IDatabaseService]
+progress = di[Progress]
 
 
 def _version_callback(value: bool) -> None:
@@ -59,12 +61,12 @@ def init(
 
     if config_folder_path is None:
         config_folder_path = typer.prompt("Enter path of working directory(absolute/relative): ")
-
-    init_config_result = mongocd_config.init_configs(config_folder_path, sanitize_config,
+    with progress:
+        init_config_result = mongocd_config.init_configs(config_folder_path, sanitize_config,
                                                      update_templates, template_url)
     if init_config_result != ReturnCode.SUCCESS:
         raise typer.Exit(init_config_result.value)
-    print(f"Completed: {mongocd_config.__app_name__} {init.__name__}")
+    print(f"{Constants.rich_completed} {mongocd_config.__app_name__} {init.__name__}")
 
 @app.command()
 def weave(
@@ -84,6 +86,7 @@ def weave(
     '''Pull data from source database and apply transformations based on given configuration'''
     print(f"Starting: {mongocd_config.__app_name__} {weave.__name__}")
     reload_dependencies = False
+    # ensure environment vriables are set and refresh dependencies afterwards if required
     if os.getenv(Constants.config_folder_key) is None:
         reload_dependencies = True
         #set both config_folder_path and the env variable
@@ -110,20 +113,23 @@ def weave(
         global databaseService; databaseService = di[IDatabaseService]
 
     if verifyService is None:
+        logger.fatal(f"verifyService dependency uninitialized")
         raise typer.Exit(ReturnCode.UNINITIALIZED.value)
     
-    verify_connectivity = verifyService.verify_connectivity(source_password)
-    if verify_connectivity != ReturnCode.SUCCESS:
-        raise typer.Exit(ReturnCode.DB_ACCESS_ERROR.value)
+    with progress:
+        # progress.add_task("test_task")
+        verify_connectivity = verifyService.verify_connectivity(source_password)
+        if verify_connectivity != ReturnCode.SUCCESS:
+            raise typer.Exit(ReturnCode.DB_ACCESS_ERROR.value)
+        
+        verify_database = verifyService.verify_databases()
+        if verify_database != ReturnCode.SUCCESS:
+            raise typer.Exit(ReturnCode.DB_ACCESS_ERROR.value)
+        # print("[green] Connection to database established Successfully!")
     
-    verify_database = verifyService.verify_databases()
-    if verify_database != ReturnCode.SUCCESS:
-        raise typer.Exit(ReturnCode.DB_ACCESS_ERROR.value)
-    print("[green] Connection to database established Successfully!")
-    
-    asyncio.run(databaseService.generate_syncscripts_async())
+        asyncio.run(databaseService.generate_syncscripts_async())
 
-    print(f"Completed: {mongocd_config.__app_name__} {weave.__name__}")
+    print(f"{Constants.rich_completed} {mongocd_config.__app_name__} {weave.__name__}")
     #VerifyDatabases
     
     

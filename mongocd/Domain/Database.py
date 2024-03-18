@@ -139,7 +139,7 @@ class DatabaseConfig(BaseModel):
                                 for pattern in exclusion_list])]
 
         existing_collection_properties = {prop.name: prop for prop in self.collections_config.properties}
-        logger.info(f"database: {self.source_db} | collections: {collection_names}")
+        print(f"database: {self.source_db} | collections: {collection_names}")
 
         # set collection properties
         for collection_name in collection_names:
