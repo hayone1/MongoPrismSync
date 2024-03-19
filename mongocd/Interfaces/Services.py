@@ -27,10 +27,14 @@ class ICollectionService:
 
     
 class IDatabaseService:
+    '''
+    responsible for pulling from source db and weaving into a useable form for destination db
+    '''
     # @abstractmethod
     async def generate_syncscripts_async(self):
         pass
-
-    # @abstractmethod
-    # async def GenerateIndexReplicationCommandAsync(databaseConfig: DatabaseConfig, collection_property: CollectionProperty) -> CollectionCommand:
-    #     pass
+class IPostRenderService:
+    '''
+    uses kustomize patch/Helm PostRender like features to customize the weaved data.
+    '''
+    pass
