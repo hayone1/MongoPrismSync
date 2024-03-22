@@ -71,10 +71,11 @@ def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCode 
 
     #confirm that the folder has all the necessary files
     # config_folder_contents = os.listdir(config_folder_path)
-    for file_location in (FileStructure):
-        full_path = f"{config_folder_path}{os.sep}{file_location.value}"
+    for directory in (FileStructure):
+        full_path = f"{config_folder_path}{os.sep}{directory.value}"
         if not os.path.exists(full_path):
-            logger.warning(f"{ReturnCode.UNINITIALIZED.name}: file missing from working dir: {full_path}. {Messages.run_init}")
+            #This does not seem to work on folder
+            logger.warning(f"{ReturnCode.UNINITIALIZED.name}: file or folder missing from working dir: {full_path}. {Messages.run_init}")
             return ReturnCode.UNINITIALIZED
     
     config_file_path = os.path.join(config_folder_path, FileStructure.CONFIGFILE.value)
@@ -207,8 +208,10 @@ def init_configs(config_folder_path: str, sanitize_config: bool,
             return ReturnCode.EXTRACT_FILE_ERROR
         utils.complete_richtask(zip_task, "template update successful")
         
-    #init output folder
+    #init folders
     os.makedirs(f"{config_folder_path}/{FileStructure.OUTPUTFOLDER.value}", exist_ok=True)
+    os.makedirs(f"{config_folder_path}/{FileStructure.BASEFOLDER.value}", exist_ok=True)
+    os.makedirs(f"{config_folder_path}/{FileStructure.CHANGESETFOLDER.value}", exist_ok=True)
     
     # os.environ[Constants.mongo_source_pass] = source_password
     print("[green]Initialization Successful")

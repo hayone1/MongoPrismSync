@@ -26,9 +26,10 @@ def _version_callback(value: bool) -> None:
 @app.command()
 def init(
     config_folder_path: Optional[str] = typer.Option(
-        os.getenv(Constants.config_folder_key, Constants.default_folder),
+        Constants.default_folder,
         "--outputfolder",
         "-o",
+        envvar=Constants.config_folder_key,
         help="The folder to place the config file"
     ),
     sanitize_config: Optional[bool] = typer.Option(
@@ -71,15 +72,17 @@ def init(
 @app.command()
 def weave(
     config_folder_path: Optional[str] = typer.Option(
-        os.getenv(Constants.config_folder_key, None),
+        Constants.default_folder,
         "--outputfolder",
         "-o",
+        envvar=Constants.config_folder_key,
         help="The folder to place the config file"
     ),
     source_password: Optional[str] = typer.Option(
-        os.getenv(Constants.mongo_source_pass, None),
+        None,
         "--source_password",
         "-p",
+        envvar=Constants.mongo_source_pass,
         help="Password of the source database"
     )
 ):

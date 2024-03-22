@@ -163,6 +163,21 @@ class DatabaseConfig(BaseModel):
             logger.debug(f"database: {self.source_db}, collection: {property.name}, indices: {property.indices}, excludeIndices: {property.excludeIndices}, unique_index_fields: {property.unique_index_fields}")
         return ReturnCode.SUCCESS
 
+class Patch(BaseModel):
+    target: dict = dict()
+    patch: str = ""
+
+class Kustomize(BaseModel):
+    patches: list[Patch] = [Patch()]
+
+class Starlark(BaseModel):
+    data: dict = dict()
+    source: str = ""
+
+class PostRenderer(BaseModel):
+    kustomize: Kustomize = Kustomize()
+    starlark: Starlark = Starlark()
+
 
 class MongoMigrationSpec(BaseModel):
     secretVars: dict = dict()
@@ -172,6 +187,7 @@ class MongoMigrationSpec(BaseModel):
     connectivityRetry: int = 5
     remote_template: str = "https://github.com/hayone1/MongoPrismSync/releases/download/v1alpha1_v0.0.1/templates_v1alpha1.zip"
     databaseConfigs: list[DatabaseConfig] = [DatabaseConfig()]
+    postRenderers: list[PostRenderer] = [PostRenderer()]
 
     @field_validator('source_conn_string', 'remote_template')
     @classmethod

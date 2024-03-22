@@ -21,11 +21,11 @@ class VerifyService():
             self.progress = progress
     
     def verify_connectivity(self, source_password: str) -> ReturnCode:
-        source_conn_string = self.mongoMigration.spec.source_conn_string
-        progress = self.progress
         if (source_password == None):
             self.logger.fatal(f"{ReturnCode.ENVVAR_ACCESS_ERROR}: {Messages.envvar_inaccessible}: {Constants.mongo_source_pass}")
             return ReturnCode.ENVVAR_ACCESS_ERROR
+        source_conn_string = self.mongoMigration.spec.source_conn_string
+        progress = self.progress
         
         if (utils.is_empty_or_whitespace(source_conn_string)):
             #source_conn_string= will print the variable name and value

@@ -16,6 +16,7 @@ import requests
 from typer import Typer
 from mongocd.Domain.Base import Messages, ReturnCode
 from mongocd.Core import config
+from pathlib import Path
 
 # @staticmethod
 # def conform_path(input_path: str):
@@ -110,3 +111,32 @@ def download_and_extract_zip(zip_url: str, extract_folder: str) -> bool:
         return False
     logger.debug(f"Download and Extract Successful: {zip_url} | destination: {extract_folder}")
     return True
+
+@staticmethod
+def replace_nth_path_name(path_str: str, n: int, new_name: str):
+    """
+    Replaces the nth path name at n in a path-like string with a new name.
+    
+
+    Args:
+        path_str (str): The path-like string.
+        n (int): The position of the path name to replace (counting from the end).
+        new_name (str): The new name to use.
+
+    Returns:
+        str: The new path-like string with the replaced name.
+
+    Raises:
+        ValueError: If n is less than 1 or greater than the number of path components.
+    Remarks:
+        Use a negative index to replace the nth path relative to the end
+    """
+
+    path = Path(path_str)
+    components = list(path.parts)
+
+    if abs(n) < 1 or abs(n) > len(components):
+        raise ValueError(f"Invalid position: {n}")
+
+    components[n] = new_name
+    return Path(*components)

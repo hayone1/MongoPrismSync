@@ -23,6 +23,17 @@ class CollectionService():
             top_level_commands: str) -> ReturnCode:
         #important! progress will only show if calling code is within a progress 'with' resource
         progress = self.progress
+        # the database folder that contains the json data from the sourcedb unmodified
+        # it is created in a location relative to the database_folder
+        base_database_folder = utils.replace_nth_path_name(database_folder, -2, FileStructure.BASEFOLDER)
+        changeset_folder = utils.replace_nth_path_name(database_folder, -2, FileStructure.CHANGESETFOLDER)
+
+        #create collection folder
+        collection_folder = f"{database_folder}/{collection_property.name}"
+        os.makedirs(collection_folder, exist_ok=True)
+        base_collection_folder = f"{database_folder}/{collection_property.name}"
+        changeset_collection_folder = f"{database_folder}/{collection_property.name}"
+
         # with progress:
         # self.logger.debug(f"FormCollectionDataAsync Started: {databaseConfig.source_db} | {collection_property.name}")
         try:
@@ -45,9 +56,8 @@ class CollectionService():
             #if unsuccessful it will give a ReturnCode
             if isinstance(get_data_result, ReturnCode): return get_data_result
             
-            #create collection folder
-            collection_folder = f"{database_folder}/{collection_property.name}"
-            os.makedirs(collection_folder, exist_ok=True)
+            # create base collection folder
+
 
             #generate script from template and write to file
             compare_insert_template = self.templates.get_template(TemplatesFiles.compare_insert)

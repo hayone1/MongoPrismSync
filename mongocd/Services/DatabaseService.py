@@ -139,10 +139,11 @@ class DatabaseService(IDatabaseService):
 
             # remove the collection properties whose name matches the collection in the "skip" list
             # as they are not needed in the next steps
-            collection_properties = [prop for prop in databaseConfig.collections_config.properties  
-                            #pass the prop id no regex/item in the skip like matches it's name
-                            if not any([re.search(pattern, prop.name)
-                                    for pattern in databaseConfig.collections_config.skipCollections])]
+            collection_properties = [
+                prop for prop in databaseConfig.collections_config.properties  
+                #pass the prop id no regex/item in the skip like matches it's name
+                    if not any([re.search(pattern, prop.name)
+                            for pattern in databaseConfig.collections_config.skipCollections])]
             
             # create folder for database if it doesnt exist
             database_folder = f"{self.output_folder}{os.sep}{databaseConfig.name}"
@@ -158,11 +159,10 @@ class DatabaseService(IDatabaseService):
                     ) for collection_property in collection_properties
                 ]
             if any(tsk.result() != ReturnCode.SUCCESS for tsk in formDocumentsDataTasks):
-                logger.error(f"Error occurred while fetching or generating data from sourcedb")
+                logger.error(f"Error(s) occurred while fetching or generating data from sourcedb")
 
             #add post commands
             commandsList.databaseScript.append(databaseConfig.postCollectionCommands)
-
 
             # remove duplicate collections created. This is the last set of commands
             delete_duplicate_collections_commands = await self.generate_deleteduplicatecollection_commandasync(
@@ -175,3 +175,4 @@ class DatabaseService(IDatabaseService):
                 db_file.writelines(commandsList.databaseScript)
 
             utils.complete_richtask(db_weave_task, f"build weave queries for dbConfig {databaseConfig.name} successful")
+            return ReturnCode.SUCCESS

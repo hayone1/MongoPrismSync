@@ -97,3 +97,5 @@ class FileStructure(Enum):
     # INIT_SCRIPT = conform_path(f'{TEMPLATESFOLDER}/init_script.js')
     DELETEDUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.deleteDuplicateCollection}')
     OUTPUTFOLDER = "output"
+    BASEFOLDER = "base"
+    CHANGESETFOLDER = "changeset"
