@@ -21,6 +21,7 @@ pytest-network = "*"
 jinja2 = "*"
 accessify = "==0.3.1"
 pydantic-yaml = "==1.2.1"
+jsonpatch = "==1.33"
 
 [dev-packages]
 

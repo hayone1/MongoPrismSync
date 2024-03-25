@@ -1,0 +1,14 @@
+{
+  "_id": {
+    "$oid": "621ff30d2a3e781873fcb65c"
+  },
+  "name": "Mercury",
+  "orderFromSun": 1,
+  "hasRings": false,
+  "mainAtmosphere": [],
+  "surfaceTemperatureC": {
+    "min": -173,
+    "max": 427,
+    "mean": 67
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "_id": {
+    "$oid": "621ff30d2a3e781873fcb662"
+  },
+  "name": "Venus",
+  "orderFromSun": 2,
+  "hasRings": false,
+  "mainAtmosphere": [
+    "CO2",
+    "N"
+  ],
+  "surfaceTemperatureC": {
+    "min": null,
+    "max": null,
+    "mean": 464
+  }
+}

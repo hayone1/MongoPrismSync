@@ -15,6 +15,8 @@ var data = db.getSiblingDB(dbName)[collName].aggregate([
     {
         $project: {
             _id: 0,
+            "database": dbName,
+            "collection": collName,
             "key" : indexKeys,
             "value": "$$ROOT"
         }

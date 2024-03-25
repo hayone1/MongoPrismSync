@@ -1,0 +1,18 @@
+{
+  "_id": {
+    "$oid": "621ff30d2a3e781873fcb65f"
+  },
+  "name": "Neptune",
+  "orderFromSun": 8,
+  "hasRings": true,
+  "mainAtmosphere": [
+    "H2",
+    "He",
+    "CH4"
+  ],
+  "surfaceTemperatureC": {
+    "min": null,
+    "max": null,
+    "mean": -201
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "_id": {
+    "$oid": "621ff30d2a3e781873fcb65e"
+  },
+  "name": "Mars",
+  "orderFromSun": 4,
+  "hasRings": false,
+  "mainAtmosphere": [
+    "CO2",
+    "Ar",
+    "N"
+  ],
+  "surfaceTemperatureC": {
+    "min": -143,
+    "max": 35,
+    "mean": -63
+  }
+}

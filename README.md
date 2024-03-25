@@ -85,7 +85,7 @@ While dreaming though, something occassionally bugs your beautiful techno dreams
 The glitched dream goes like this:
 ![**DevOps that could have been in your data.**](docs/img/manual-db.png) Source: https://www.liquibase.com/
 
-At this point, It looks like i've moved from a readme to a whitepaper 😂. But you can find those [here](https://learn.g2.com/database-devops) and [here](https://www.liquibase.com/resources/guides/database-automation).
+At this point, It looks like i've moved from a readme to a story book 😂. But you can find those [here](https://learn.g2.com/database-devops) and [here](https://www.liquibase.com/resources/guides/database-automation).
 
 ### Enter Mongocd
 
@@ -104,7 +104,7 @@ Mongocd aims to contribute and integrate to the various database devops and rele
 - Weave should check if the current files have been manually edited before proceeding to adjust
 - in debug mode, it should be apparent when a default value is being used for a field
 - replace ABC with accessify to improve access levels and interface strictness
-
+- write changesets that is compatible with liquidbase and bytebase
 ### Ideas
 Final name of the product couls be mongocd or mongoci or mongocd
 

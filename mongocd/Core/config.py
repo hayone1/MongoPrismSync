@@ -5,7 +5,7 @@ import yaml
 from pydantic_yaml import parse_yaml_raw_as
 
 from mongocd.Domain.Base import *
-from mongocd.Domain.Database import MongoMigration
+from mongocd.Domain.MongoMigration import MongoMigration
 from mongocd.Core import utils
 from mongocd.Interfaces.Services import *
 from mongocd.Services.CollectionService import CollectionService
@@ -118,6 +118,7 @@ def inject_dependencies() -> ReturnCode:
             config_file_path = validate_workingdir(CONFIG_FOLER_PATH, di[Logger])
 
         #start out as null, dependencies need to be injected the order given
+        di['config_folder_path'] = CONFIG_FOLER_PATH
         di[MongoMigration] = None
         di["clients"] = None
         di[IVerifyService] = None
@@ -207,11 +208,20 @@ def init_configs(config_folder_path: str, sanitize_config: bool,
         if extract_successful == False:
             return ReturnCode.EXTRACT_FILE_ERROR
         utils.complete_richtask(zip_task, "template update successful")
-        
+    
     #init folders
-    os.makedirs(f"{config_folder_path}/{FileStructure.OUTPUTFOLDER.value}", exist_ok=True)
-    os.makedirs(f"{config_folder_path}/{FileStructure.BASEFOLDER.value}", exist_ok=True)
-    os.makedirs(f"{config_folder_path}/{FileStructure.CHANGESETFOLDER.value}", exist_ok=True)
+    for directory in (FileStructure):
+        # skip if it is a file
+        if os.path.splitext(directory.value)[1]: continue
+        try:
+            full_path = f"{config_folder_path}{os.sep}{directory.value}"
+            os.makedirs(full_path, exist_ok=True)  # Create folder, ignore if exists
+        except OSError as ex:
+            print(f"Error creating folder {full_path}: {ex}")
+            return ReturnCode.DIR_ACCESS_ERROR
+    # os.makedirs(f"{config_folder_path}/{FileStructure.OUTPUTFOLDER.value}", exist_ok=True)
+    # os.makedirs(f"{config_folder_path}/{FileStructure.BASEFOLDER.value}", exist_ok=True)
+    # os.makedirs(f"{config_folder_path}/{FileStructure.CHANGESETFOLDER.value}", exist_ok=True)
     
     # os.environ[Constants.mongo_source_pass] = source_password
     print("[green]Initialization Successful")

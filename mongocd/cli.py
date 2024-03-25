@@ -2,6 +2,7 @@
 
 import sys
 from typing import Optional
+from typing_extensions import Annotated
 from kink import inject, di
 import typer
 from mongocd.Core import config as mongocd_config
@@ -70,21 +71,27 @@ def init(
     print(f"{Constants.rich_completed} {mongocd_config.__app_name__} {init.__name__}")
 
 @app.command()
-def weave(
-    config_folder_path: Optional[str] = typer.Option(
+def build(
+    config_folder_path = Annotated[str, typer.Option(
         Constants.default_folder,
         "--outputfolder",
         "-o",
         envvar=Constants.config_folder_key,
         help="The folder to place the config file"
-    ),
-    source_password: Optional[str] = typer.Option(
+    )],
+    source_password = Annotated[str, typer.Option(
         None,
         "--source_password",
         "-p",
         envvar=Constants.mongo_source_pass,
         help="Password of the source database"
-    )
+    )],
+    environment = Annotated[str, typer.Option(
+        Constants.default_environment,
+        "--environment",
+        "-e",
+        help="Password of the source database"
+    )],
 ):
     '''Pull data from source database and apply transformations based on given configuration'''
     print(f"Starting: {mongocd_config.__app_name__} {weave.__name__}")

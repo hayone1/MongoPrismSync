@@ -33,8 +33,29 @@ class IDatabaseService:
     # @abstractmethod
     async def generate_syncscripts_async(self):
         pass
-class IPostRenderService:
+class IPostRendererService:
     '''
     uses kustomize patch/Helm PostRender like features to customize the weaved data.
     '''
-    pass
+    def generate_changeset(source_data: dict, destination_data: dict):
+        '''
+        Generates a list of changes that need to be applied to the source_data
+        in order to arrive at the destinaton_data
+        '''
+        pass
+
+    # def filter_resources(target_selector: dict)
+
+    def generate_from_patches(source_data: dict, patches: list[dict] | str) -> dict:
+        '''
+        Generates a dictionary that results from applying the given patches to the
+        source_data.
+        '''
+        pass
+
+    def generate_from_starlark(source_data: dict, starlark):
+        '''
+        Generates a dictionary that results from applying the given starlark script
+        to the source_data.
+        '''
+        pass

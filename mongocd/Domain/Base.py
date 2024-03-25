@@ -43,6 +43,7 @@ class Constants:
     default_folder = 'MongoMigrate'
     log_level = 'LOG_LEVEL'
     default_log_level  = 'error'
+    default_environment = 'dev'
     db_name = 'db_name'
     coll_name = 'coll_name'
     source_collections = 'source_collections'
@@ -99,3 +100,4 @@ class FileStructure(Enum):
     OUTPUTFOLDER = "output"
     BASEFOLDER = "base"
     CHANGESETFOLDER = "changeset"
+    OVERLAYSFOLDER = "overlays"

@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 import traceback
+from typing import Any, Generator
 from zipfile import ZipFile
 from kink import di, inject
 from requests.exceptions import *
@@ -140,3 +141,32 @@ def replace_nth_path_name(path_str: str, n: int, new_name: str):
 
     components[n] = new_name
     return Path(*components)
+
+@staticmethod
+def filter_dicts(source_dict_list: list[dict],
+        dict_filter: dict,) -> Generator[dict, Any, None]:
+    # filtered_dicts = []
+    for source_dict in source_dict_list:
+        if all(key in source_dict and source_dict[key] == value
+               for key, value in dict_filter.items()):
+            yield source_dict
+@staticmethod
+def multi_filter_dicts(dict_filters: list[dict],
+        source_dict_list: list[dict]) -> list[dict]:
+    '''Lazy function'''
+    # woud have been nice to have a linq like function to build this
+    # function as a pipeline ish
+    filtered_dicts_lists: list[list[dict]] = []
+    for dict_filter in dict_filters:
+        filtered_dicts_lists.append(filter_dicts(source_dict_list, dict_filter))
+
+    flattened_filtered_dicts = [dict_item for sublist in filtered_dicts_lists
+                                for dict_item in sublist]
+    
+    # Convert the list of dictionaries to a set of tuples for uniqueness
+    unique_tuples = {tuple(sorted(d.items())) for d in flattened_filtered_dicts}
+
+    # Convert the unique tuples back to dictionaries
+    unique_dicts = [dict(t) for t in unique_tuples]
+    return unique_dicts
+        
