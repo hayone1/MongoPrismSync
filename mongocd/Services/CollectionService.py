@@ -65,7 +65,7 @@ class CollectionService():
                 description=f"applying postrender for collection: {collection_property.name}",
                 total=1
             )
-            for documents_data in collection_documents_data:
+            # for documents_data in collection_documents_data:
 
                 #ToDo
                 #apply changes to document and generate change final document changeset
@@ -84,10 +84,10 @@ class CollectionService():
 
                 compare_insert_command = await compare_insert_template.render_async(
                     {
-                        Constants.db_name: databaseConfig.destination_db,
-                        Constants.coll_name: collection_property.name,
-                        Constants.source_data_json: json.dumps(documents_data.value, indent=2),
-                        Constants.unique_fields: json.dumps(documents_data.key, indent=2)
+                        Constants.db_name.name: databaseConfig.destination_db,
+                        Constants.coll_name.name: collection_property.name,
+                        Constants.source_data_json.name: json.dumps(documents_data.value, indent=2),
+                        Constants.unique_fields.name: json.dumps(documents_data.key, indent=2)
                     }
                 )
 
@@ -110,9 +110,9 @@ class CollectionService():
         get_collection_data_template = self.templates.get_template(TemplatesFiles.getCollectionData)
         get_collection_data_query = await get_collection_data_template.render_async(
             {
-                Constants.db_name: databaseConfig.source_db,
-                Constants.coll_name: collection_property.name,
-                Constants.unique_index_fields: collection_property.unique_index_fields
+                Constants.db_name.name: databaseConfig.source_db,
+                Constants.coll_name.name: collection_property.name,
+                Constants.unique_index_fields.name: collection_property.unique_index_fields
             }
         )
         get_data_result: list[DocumentData] | ReturnCode = \

@@ -1,23 +1,20 @@
 
+import json
 from logging import Logger
-import os, importlib
+import os
 from pathlib import Path
-import subprocess
-import sys
 import traceback
 from typing import Any, Generator
 from zipfile import ZipFile
 from kink import di, inject
-from requests.exceptions import *
+from requests.exceptions import ConnectionError
 from rich.progress import Progress, TaskID
 from rich import print
 
 
 import requests
-from typer import Typer
-from mongocd.Domain.Base import Messages, ReturnCode
-from mongocd.Core import config
-from pathlib import Path
+import yaml
+from mongocd.Domain.Base import Constants, Messages, ReturnCode
 
 # @staticmethod
 # def conform_path(input_path: str):
@@ -27,16 +24,18 @@ from pathlib import Path
 
 @staticmethod
 def is_empty_or_whitespace(input_string: str):
-    '''Returns True if object is a string that is empty or contains white space alone'''
-    if not isinstance(input_string, str|None): raise TypeError("object is not a valid string")
+    """Returns True if object is a string that is empty or contains white space alone"""
+    if not isinstance(input_string, str|None):
+        raise TypeError("object is not a valid string")
     return input_string is None or input_string.strip() == ''
 
 @staticmethod
 def get_full_path(input_path) -> str:
-    '''Get the absolute path of a given path
+    """
+    Get the absolute path of a given path
 
     Path will remain unchanged if already absolute
-    '''
+    """
     #convert the path into a format compliant with the underlying os
     input_path = os.path.join(*input_path.split("\\"))
     input_path = os.path.normpath(input_path)
@@ -52,38 +51,38 @@ def get_full_path(input_path) -> str:
 @staticmethod
 @inject
 def complete_richtask(task_id: TaskID, description: str, progress: Progress = None):
-    '''replaces task with completed message.
+    """replaces task with completed message.
     progress object is gotten from injected Progress.
     
-    Throws error if progress object is not injected'''
+    Throws error if progress object is not injected"""
     progress.update(task_id, completed=True)
     progress.remove_task(task_id)
     # progress.stop()
     print(f"[green]✓[/green] {description}")
 
 def fault_richtask(task_id: TaskID, description: str, progress: Progress = None):
-    '''replaces task with faulted message.
+    """replaces task with faulted message.
     progress object is gotten from injected Progress.
     
-    Throws error if progress object is not injected'''
+    Throws error if progress object is not injected"""
     progress.update(task_id, completed=True)
     progress.remove_task(task_id)
     # progress.stop()
     print(f"[red]x[/red] {description}")
 
 @staticmethod
-def download_and_extract_zip(zip_url: str, extract_folder: str) -> bool:
-    '''Download and extract a zip file to specified folder
+def download_and_extract_zip(zip_url: str, extract_folder: str) -> ReturnCode:
+    """Download and extract a zip file to specified folder
 
     Make sure logger has been initialized for dependency injection
-    '''
+    """
     logger = di[Logger]
     # Create the extraction folder if it doesn't exist
     os.makedirs(extract_folder, exist_ok=True)
 
     # Download the zip file
     try:
-        response = requests.get(zip_url)
+        response = requests.get(zip_url, timeout=Constants.general_timeout.value)
         if response.status_code == 404:
             logger.error(f"No Resource Found at {zip_url}")
             return False
@@ -105,13 +104,13 @@ def download_and_extract_zip(zip_url: str, extract_folder: str) -> bool:
         os.remove(zip_file_path)
     except ConnectionError as ex:
         logger.error(f"{ReturnCode.CONNECTION_ERROR}: Unable to fetch latest templates, please check that you have an active internet connection. {ex}")
-        return False
+        return ReturnCode.CONNECTION_ERROR
     except Exception as ex:
         logger.error(f"""{ReturnCode.UNKNOWN_ERROR.name}: Unknown error occurred while 
                      {Messages.write_file} or {Messages.extract_file} or {Messages.remove_file} | {ex} | {traceback.format_exc()}""")
-        return False
+        return ReturnCode.UNKNOWN_ERROR
     logger.debug(f"Download and Extract Successful: {zip_url} | destination: {extract_folder}")
-    return True
+    return ReturnCode.SUCCESS
 
 @staticmethod
 def replace_nth_path_name(path_str: str, n: int, new_name: str):
@@ -153,7 +152,7 @@ def filter_dicts(source_dict_list: list[dict],
 @staticmethod
 def multi_filter_dicts(dict_filters: list[dict],
         source_dict_list: list[dict]) -> list[dict]:
-    '''Lazy function'''
+    """Lazy function"""
     # woud have been nice to have a linq like function to build this
     # function as a pipeline ish
     filtered_dicts_lists: list[list[dict]] = []
@@ -169,4 +168,101 @@ def multi_filter_dicts(dict_filters: list[dict],
     # Convert the unique tuples back to dictionaries
     unique_dicts = [dict(t) for t in unique_tuples]
     return unique_dicts
+
+@staticmethod
+def match_document(document_dict: dict, filter_dict: dict) -> bool:
+
+    # return true if there is no filter
+    filter_dict = filter_dict.copy()
+    if len(filter_dict) == 0:
+        return True
+    #match and delete matching meta filter keys
+    for key, value in document_dict.items():
+        # data not a part of meta data
+        if key == 'data':
+            continue
         
+        if key in filter_dict and isinstance(value, dict):
+            if not match_filter(value, filter_dict[key]):
+                return False
+            #else
+            del filter_dict[key]
+        elif key in filter_dict:
+            #key is same but value is not
+            if filter_dict[key] != value:
+                return False
+            # else remove from remaining filters
+            del filter_dict[key]
+
+    # match the remaining filters (data filter). Potential issue is if there
+    # is a data filter that is reserved as part of the meta filter keys.
+    if not match_filter(document_dict['data'], filter_dict):
+        return False
+    return True
+
+@staticmethod
+def match_filter(data: dict, filter_dict: dict, exclude_keys: list = None) -> bool:
+    """
+    Returns True if data matches filter(via a recursive check) otherwise returns False
+
+    Args:
+        exclude_keys: keys to exclude from match checking
+    """
+    if exclude_keys is None:
+        exclude_keys = []
+    if not isinstance(filter_dict, dict) or not isinstance(data, dict):
+        return False
+    # print(f"filter_dict: {filter_dict}")
+    for key, value in filter_dict.items():
+        # print(f"matching {key}")
+        if key in exclude_keys:
+            continue # don't check
+        if key not in data:
+            return False
+        if isinstance(value, dict):
+            if not match_filter(data[key], value):
+                return False
+        elif value != data[key]:
+            return False
+    return True
+
+@staticmethod
+def load_data_from_file(file_path: str) -> dict:
+    """Loads a dictionary or list from a json or yaml file"""
+    logger = di[Logger]
+    if not os.path.exists(file_path):
+        logger.error(
+            "Unable to load file, it does not exist "
+            f"or is inaccessible: {file_path}")
+        return ReturnCode.DIR_ACCESS_ERROR
+    with open(file_path, 'r') as file:
+        try:
+            # Attempt to load JSON first (more common for kustomize patches)
+            return json.load(file)
+        except json.JSONDecodeError:
+            pass
+        # flow into yaml if json didnt work
+        try:
+            return yaml.safe_load(file_path)
+        except yaml.YAMLError:
+            logger.error(f"Failed to parse file '{file_path}' as JSON or YAML")
+            return ReturnCode.INVALID_CONFIG_ERROR
+@staticmethod
+def load_data_from_string(data: str) -> list | dict:
+    """Loads a dictionary or list from a json or yaml string"""
+    logger = di[Logger]
+    try:
+        # Attempt to load JSON first (more common for kustomize patches)
+        return json.loads(data)
+    except json.JSONDecodeError:
+        pass
+    # flow into yaml if json didnt work
+    try:
+        return yaml.safe_load(data)
+    except yaml.YAMLError:
+        logger.error(f"Failed to parse given string as JSON or YAML: '{data}'")
+        return ReturnCode.INVALID_CONFIG_ERROR
+
+
+            
+    

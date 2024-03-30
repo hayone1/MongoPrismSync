@@ -2,9 +2,10 @@
 from kink import inject
 from mongocd.Domain.Base import *
 from mongocd.Domain.Database import *
+from mongocd.Domain.MongoMigration import MongoMigration
 from mongocd.Interfaces.Services import IVerifyService
 from rich import print
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import Progress
 from accessify import implements
 
 
@@ -22,7 +23,7 @@ class VerifyService():
     
     def verify_connectivity(self, source_password: str) -> ReturnCode:
         if (source_password == None):
-            self.logger.fatal(f"{ReturnCode.ENVVAR_ACCESS_ERROR}: {Messages.envvar_inaccessible}: {Constants.mongo_source_pass}")
+            self.logger.fatal(f"{ReturnCode.ENVVAR_ACCESS_ERROR}: {Messages.envvar_inaccessible}: {Constants.MONGOSOURCEPASSWORD.name}")
             return ReturnCode.ENVVAR_ACCESS_ERROR
         source_conn_string = self.mongoMigration.spec.source_conn_string
         progress = self.progress
@@ -59,7 +60,7 @@ class VerifyService():
                                 | password: {source_password} | {ex}""")
             return ReturnCode.DB_ACCESS_ERROR
 
-        print(f"{Constants.rich_completed} verify mongodb connectivity")
+        print(f"{Constants.rich_completed.value} verify mongodb connectivity")
         return ReturnCode.SUCCESS
 
     def verify_databases(self) -> ReturnCode:
@@ -96,8 +97,6 @@ class VerifyService():
             return ReturnCode.DB_ACCESS_ERROR
         
         # self.logger.debug(f"successfully connected to some or all databases: {success_databases}")
-        print(f"{Constants.rich_completed} verify mongodb connectivity | {success_databases}")
+        print(f"{Constants.rich_completed.value} verify mongodb connectivity | {success_databases}")
         return ReturnCode.SUCCESS
         
-        
-        # destination_collections = source_db.list_collection_names(filter=filter)

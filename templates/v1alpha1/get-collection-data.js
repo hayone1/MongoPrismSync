@@ -18,7 +18,7 @@ var data = db.getSiblingDB(dbName)[collName].aggregate([
             "database": dbName,
             "collection": collName,
             "key" : indexKeys,
-            "value": "$$ROOT"
+            "data": "$$ROOT"
         }
     }
 ]);

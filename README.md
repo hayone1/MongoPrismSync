@@ -100,6 +100,28 @@ Mongocd aims to contribute and integrate to the various database devops and rele
 - You shouldn't manage massive data (eg. userinfo, session info, passwords etc...) in your repo. That's what the database is for. Rather you should manage things like schema definition and configuration related data; Things that will generally persist among environments or only need minimal data transformation across.
 - If you manually change the data in the repo, mongocd will not know and the next time it is run, it will overwrite your manual changes. Hence any manual changes done to the data should be "translated" into the `WeaveConfig` in a way that can product the same outcome. That will prevent conflict and the need for constant manual interventions.
 
+## Development
+Starlark development requires cgo so you'd need to have go and a gcc compiler installed.
+
+After running your downloads, ensure to refresh your shell/environments for proper PATH updates.
+### Go
+Download [go](https://go.dev/dl/).
+
+### GNU Compiler
+gcc comes with linux build-essential: `apt-get install build-essential`.
+
+On Mac: `brew install gcc`.
+
+On windows, you can download from [tdm-gcc](https://jmeubank.github.io/tdm-gcc/articles/2021-05/10.3.0-release).
+
+> Though unlikely, you may also need to set CGO_ENABLED as an environment variable to 1.
+
+### Pipenv
+run `pip install pipenv` or `pip3 install pipenv`.
+
+### Requirements
+run `pipenv install` and you're good to start coding.
+
 ## TODO
 - Weave should check if the current files have been manually edited before proceeding to adjust
 - in debug mode, it should be apparent when a default value is being used for a field

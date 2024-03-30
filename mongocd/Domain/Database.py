@@ -11,8 +11,7 @@ from pydantic import BaseModel, ValidationInfo, field_validator, validator
 from pymongo import MongoClient, database
 from pymongo.database import Database
 
-from mongocd.Domain.Base import Constants, CustomResource, Messages, ReturnCode
-from mongocd.Domain.PostRender import PostRenderer
+from mongocd.Domain.Base import Messages, ReturnCode
 
 T = TypeVar('T')
 class CreateIndexOptions:
@@ -29,7 +28,7 @@ class DocumentData(BaseModel):
     database: str
     collection: str
     key: dict
-    value: dict
+    data: dict
     filename: str
 
 class ShardData(BaseModel):
@@ -93,8 +92,7 @@ class CollectionsConfig(BaseModel):
 class DatabaseConfig(BaseModel):
     name: str = ""
     skip: bool = False
-    # replicate_index: bool = False
-    replicate_mode: str = Constants.command + Constants.document
+    # replicate_mode: str = Constants.command + Constants.document
     create_index: str | bool = True
     cleanup_backup: bool = True
     source_authdb: str = ""
@@ -115,16 +113,13 @@ class DatabaseConfig(BaseModel):
     @inject
     def SetCollectionConfig(self, db: database.Database, logger: Logger = None) -> ReturnCode:
         
-        # exclude_filter = {'name': {'$not': {'$in': exclusion_list}}} #I wonder why I didnt use this
-        # filter = {"name": {"$regex": r"^(?!system\.)"}}
-
-        filter = {
+        filter_dict = {
             "name": {"$regex": r"^(?!system\.)"}
             # "name": {"$nin": self.collections_config.excludeCollections}
         }
         collection_names: list[str]
         try:
-            collection_names = db.list_collection_names(filter=filter)
+            collection_names = db.list_collection_names(filter=filter_dict)
         except Exception as ex:
             logger.error("Unable to establish database session to fetch collection names | {ex}")
             return ReturnCode.DB_ACCESS_ERROR

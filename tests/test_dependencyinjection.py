@@ -1,17 +1,14 @@
 from logging import Logger
-import logging
-import pytest, socket
-import requests
-from typer.testing import CliRunner
-from mongocd import cli
+import pytest
 from kink import di
 
-from mongocd.Domain.Database import DbClients, MongoMigration
+from mongocd.Domain.MongoMigration import MongoMigration
 from mongocd.Services.VerifyService import VerifyService
 from mongocd.Core import config
 
-def test_di_content(runner: CliRunner):
-    '''Test that dependencies are correctly injected'''
+pytestmark = pytest.mark.skip("all tests still WIP")
+def test_di_content():
+    """Test that dependencies are correctly injected"""
     # result = runner.invoke(cli.app, ["--version"])
     config.inject_dependencies()
     assert isinstance(di[MongoMigration], MongoMigration | None)

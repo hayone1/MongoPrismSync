@@ -15,8 +15,6 @@ var data = db.getSiblingDB(dbName)[collName].aggregate([
     {
         $project: {
             _id: 0,
-            "database": dbName,
-            "collection": collName,
             "key" : indexKeys,
             "value": "$$ROOT"
         }
@@ -26,4 +24,4 @@ var data = db.getSiblingDB(dbName)[collName].aggregate([
 result = data.map(function (dt) {dt["filename"] = Object.values(dt["key"]).join("|"); return dt} );
 //printjson(result);
 // EJSON.serialize(result.toArray());
-EJSON.stringify(result.toArray());
+printjson(EJSON.stringify(result.toArray()));

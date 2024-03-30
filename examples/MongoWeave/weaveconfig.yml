@@ -15,7 +15,6 @@ spec:
     name: sample
     postCollectionCommands: 'db.runCommand({ ping: 1 });'
     preCollectionCommands: 'db.runCommand({ ping: 1 });'
-    replicate_mode: commanddocument
     shard:
       commands: []
       database: false
@@ -23,14 +22,36 @@ spec:
     source_authdb: admin
     source_db: sample_guides
   destination_conn_string: ''
-  postRenderers:
-  - kustomize:
-      patches:
-      - patch: ''
-        target: {}
-    starlark:
-      data: {}
-      source: ''
   remote_template: https://github.com/hayone1/MongoPrismSync/releases/download/v1alpha1_v0.0.1/templates_v1alpha1.zip
+  render:
+    all:
+      exclude: []
+      postRenderers:
+      - kustomize:
+          patches:
+          - patch: ''
+            path: ''
+            target: {}
+        starlarkrun: {}
+      validators:
+      - cue:
+          configMap:
+            source: ''
+          configPath: ''
+          selectors: []
+    default:
+      exclude: []
+      postRenderers:
+      - kustomize:
+          patches:
+          - patch: ''
+            path: ''
+            target: {}
+        starlarkrun: {}
+      validators:
+      - cue:
+          configMap: {}
+          configPath: ''
+          selectors: []
   secretVars: {}
   source_conn_string: mongodb+srv://mongocd@mongocd.ymkddtx.mongodb.net/admin?replicaSet=atlas-11nj50-shard-0&readPreference=primary&srvServiceName=mongodb&connectTimeoutMS=10000&authSource=admin&authMechanism=SCRAM-SHA-1

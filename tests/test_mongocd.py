@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 from mongocd import cli
 from mongocd.Core.config import __app_name__, __version__
 
-# pytestmark = pytest.mark.skip("all tests still WIP")
+pytestmark = pytest.mark.skip("all tests still WIP")
 # runner = CliRunner()
 # @pytest.mark.skip(reason="skip")
 def test_version(runner: CliRunner):

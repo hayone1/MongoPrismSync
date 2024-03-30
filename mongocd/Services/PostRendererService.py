@@ -25,12 +25,6 @@ class PostRendererService:
                 f"for {document_id} | {type(ex)} | {ex}"
             )
 
-    def filter_resources(databaseConfig: DatabaseConfig, target_selector: dict):
-        return filter
-
-
-        
-
     def generate_from_starlark(self, source_data: dict, starlark, document_id: str):
         '''
         Generates a dictionary that results from applying the given starlark script

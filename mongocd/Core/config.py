@@ -1,8 +1,9 @@
-import os,traceback
+import os
+import traceback
 from kink import inject, di
 from pydantic_core import ValidationError
+import starlark_go
 import yaml
-from pydantic_yaml import parse_yaml_raw_as
 
 from mongocd.Domain.Base import *
 from mongocd.Domain.MongoMigration import MongoMigration
@@ -12,6 +13,7 @@ from mongocd.Services.CollectionService import CollectionService
 from mongocd.Services.DatabaseService import DatabaseService
 from mongocd.Services.VerifyService import VerifyService
 
+import logging
 from rich import print
 from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -31,7 +33,7 @@ class PasswordFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         # Replace 'password' with a placeholder in the log message
-        SOURCE_PASSWORD = os.getenv(Constants.mongo_source_pass, "")
+        SOURCE_PASSWORD = os.getenv(Constants.MONGOSOURCEPASSWORD.name, "")
         if not utils.is_empty_or_whitespace(SOURCE_PASSWORD):
             #convert the password into asteric *
             record.msg = record.msg.replace(SOURCE_PASSWORD, ('*' * len(SOURCE_PASSWORD)))
@@ -41,7 +43,7 @@ class PasswordFilter(logging.Filter):
 @staticmethod
 def init_logger() -> Logger:
     #get log level from environment variable
-    log_level_str = os.environ.get(Constants.log_level, Constants.default_log_level).lower()
+    log_level_str = os.environ.get(Constants.LOG_LEVEL.name, Constants.LOG_LEVEL.value).lower()
     log_level = LOG_LEVEL_MAP.get(log_level_str)
 
     handler = logging.StreamHandler()  # Or FileHandler or anything else
@@ -89,9 +91,9 @@ def validate_workingdir(config_folder_path: str,  logger: Logger) -> ReturnCode 
     
 @staticmethod
 def inject_dependencies() -> ReturnCode:
-    '''
+    """
     instantiate dependencies needed for app
-    '''
+    """
     
     if Logger not in di:
         di[Logger] = init_logger()
@@ -104,15 +106,16 @@ def inject_dependencies() -> ReturnCode:
         )
     logger = di[Logger]
     progress = di[Progress]
+    starlark_go.configure_starlark(allow_set=True)
 
     CONFIG_FOLER_PATH = utils.get_full_path(
-        os.getenv(Constants.config_folder_key, Constants.default_folder))
-    SOURCE_PASSWORD = os.getenv(Constants.mongo_source_pass)
+        os.getenv(Constants.CONFIGFOLDER.name, Constants.CONFIGFOLDER.value))
+    SOURCE_PASSWORD = os.getenv(Constants.MONGOSOURCEPASSWORD.name)
 
     #need to deal with persisting SOURCE_PASSWORD
     if (CONFIG_FOLER_PATH is None or SOURCE_PASSWORD is None):
         logger.warning(f"""{ReturnCode.UNINITIALIZED.name}: Required environment variables 
-                       {Constants.config_folder_key} or {Constants.mongo_source_pass} is not set. {Messages.run_init}""")
+                       {Constants.CONFIGFOLDER.name} or {Constants.MONGOSOURCEPASSWORD.name} is not set. {Messages.run_init}""")
     try:
         with progress:
             config_file_path = validate_workingdir(CONFIG_FOLER_PATH, di[Logger])
@@ -149,7 +152,7 @@ def inject_dependencies() -> ReturnCode:
         di[IVerifyService] = VerifyService(di[MongoMigration], di["clients"])
         
         #no need to validate existence of folder as validate_workingdir would have done that
-        template_abs_folder = f"{CONFIG_FOLER_PATH}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
+        template_abs_folder = f"{CONFIG_FOLER_PATH}{os.sep}{FileStructure.JSTEMPLATESFOLDER.value}"
         templates = Environment(loader=FileSystemLoader(template_abs_folder), enable_async=True)
 
         collectionService = CollectionService(templates, di[MongoMigration], di["clients"])
@@ -199,14 +202,14 @@ def init_configs(config_folder_path: str, sanitize_config: bool,
     utils.complete_richtask(init_file_task, "configfile initialization successful")
 
     #download templates
-    template_abs_folder = f"{config_folder_path}{os.sep}{FileStructure.TEMPLATESFOLDER.value}"
+    template_abs_folder = f"{config_folder_path}{os.sep}{FileStructure.JSTEMPLATESFOLDER.value}"
     if update_templates:
         # with progress:
         zip_task = progress.add_task(description="updating templates...", total=None)
-        extract_successful = utils.download_and_extract_zip(prismsync_config.spec.remote_template,
+        extract_status = utils.download_and_extract_zip(prismsync_config.spec.remote_template,
                                 template_abs_folder)
-        if extract_successful == False:
-            return ReturnCode.EXTRACT_FILE_ERROR
+        if extract_status != ReturnCode.SUCCESS:
+            return extract_status
         utils.complete_richtask(zip_task, "template update successful")
     
     #init folders
@@ -261,7 +264,7 @@ def init_config_file(config_folder_path: str, sanitize_config: bool = False,
             #if file is empty or non existent, create a new file
             with open(config_file_path, 'w') as file:
                 yaml.dump(migration_config_data.model_dump(), file, default_flow_style=False)
-        os.environ[Constants.config_folder_key] = config_folder
+        os.environ[Constants.CONFIGFOLDER.name] = config_folder
         return migration_config_data
     except OSError as ex:
         logger.fatal(f"{ReturnCode.DIR_ACCESS_ERROR.name}: Error occurred while {Messages.write_file}, {config_folder_path} | {ex}")

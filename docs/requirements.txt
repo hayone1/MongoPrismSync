@@ -1,0 +1,10 @@
+CGO_CFLAGS='-IC:\Users\Admin\Documents\GitHub\MongoPrismSync\.venv\include -IC:\Python312\include -IC:\Python312\Include'
+CGO_LDFLAGS='-LC:\Python312\libs -lpython3'
+GOPATH='C:\Users\Admin\AppData\Local\Temp\tmpp4sq3bfb'
+go build -buildmode=c-shared -o 'C:\Users\Admin\AppData\Local\Temp\pip-install-4tjccfk1\starlark-go_6f021df2ce8943eab88b53c0af05609e\build\lib.win-amd64-cpython-312\starlark_go\starlark_go.cp312-win_amd64.pyd' '-ldflags=-s -w'
+
+
+$env:CGO_ENABLED=1
+install gcc compiler
+https://jmeubank.github.io/tdm-gcc/articles/2021-05/10.3.0-release
+linux: apt-get install build-essential

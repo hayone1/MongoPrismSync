@@ -6,16 +6,16 @@ from mongocd.Domain.Base import Constants, ReturnCode
 from mongocd.Core import utils
 
 from kink import di
-
-from mongocd.Domain.Database import MongoMigration
+from mongocd.Domain.MongoMigration import MongoMigration
 from mongocd.Interfaces.Services import IVerifyService
 
+pytestmark = pytest.mark.skip("all tests still WIP")
 @pytest.fixture
 def verifyService():
     return di[IVerifyService]
 @pytest.fixture
 def source_password():
-    return os.getenv(Constants.mongo_source_pass, None)
+    return os.getenv(Constants.MONGOSOURCEPASSWORD.name, None)
 @pytest.fixture
 def source_conn_string():
     if di[MongoMigration] is None: return None

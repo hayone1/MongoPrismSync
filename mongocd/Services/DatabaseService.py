@@ -54,8 +54,8 @@ class DatabaseService(IDatabaseService):
             index_replication_template = self.templates.get_template(TemplatesFiles.copyIndices)
             index_replication_command = await index_replication_template.render_async(
                 {
-                    Constants.db_name: databaseConfig.destination_db,
-                    Constants.source_collections_indices: source_collection_indices
+                    Constants.db_name.name: databaseConfig.destination_db,
+                    Constants.source_collections_indices.name: source_collection_indices
                 }
             )
             return index_replication_command
@@ -74,8 +74,8 @@ class DatabaseService(IDatabaseService):
         duplicate_collection_template = self.templates.get_template(TemplatesFiles.duplicateCollections)
         duplicate_collection_commands = await duplicate_collection_template.render_async(
             {
-                Constants.db_name: db_name,
-                Constants.source_collections: list(map(lambda prop: prop.name, collections_config.properties))
+                Constants.db_name.name: db_name,
+                Constants.source_collections.name: list(map(lambda prop: prop.name, collections_config.properties))
             }
         )
         return duplicate_collection_commands
@@ -85,8 +85,8 @@ class DatabaseService(IDatabaseService):
         delete_duplicate_collections_template = self.templates.get_template(TemplatesFiles.deleteDuplicateCollection)
         delete_duplicate_collections_commands = await delete_duplicate_collections_template.render_async(
             {
-                Constants.db_name: db_name,
-                Constants.source_collections: list(map(lambda prop: prop.name, collections_config.properties))
+                Constants.db_name.name: db_name,
+                Constants.source_collections.name: list(map(lambda prop: prop.name, collections_config.properties))
             }
         )
         return delete_duplicate_collections_commands

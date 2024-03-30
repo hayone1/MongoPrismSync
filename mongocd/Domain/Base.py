@@ -20,9 +20,10 @@ class ReturnCode(Enum):
     CONNECTION_ERROR = 11
     # error is reported from the db side
     DB_ERROR = 12
-
+    EXECUTION_ERROR = 13
+    VALIDATION_ERROR = 14
 class Messages:
-    run_init = f"""Please run mongocd init
+    run_init = """Please run mongocd init \
             or mongocd --help for usage details"""
     dir_validation = "Running working directory validations"
     write_file = "Writing file"
@@ -34,16 +35,20 @@ class Messages:
     operation_timeout = "timeout while fetching resource or performing operation. make sure you're connected to the right public Network or VPN."
     empty_notallowed = "cannot be empty or null."
 
-class Constants:
+
+# ok = StarlarkContextClass()
+# ok2 = ok.resource_list
+
+
+class Constants(str, Enum):
     command = "command"
     document = "document"
-    mongo_source_pass = "MONGOSOURCEPASSWORD"
-    config_folder_key = "CONFIGFOLDER"
+    MONGOSOURCEPASSWORD = "i_have_no_password"
+    CONFIGFOLDER = "MongoMigrate"
     sanitize_config = "SANITIZE_CONFIG"
-    default_folder = 'MongoMigrate'
-    log_level = 'LOG_LEVEL'
-    default_log_level  = 'error'
-    default_environment = 'dev'
+    default_folder = 'MongoMigrate' # remove
+    LOG_LEVEL = 'error'
+    RENDER_ENV = ["dev"]
     db_name = 'db_name'
     coll_name = 'coll_name'
     source_collections = 'source_collections'
@@ -52,13 +57,18 @@ class Constants:
     source_data_json = 'source_data_json'
     unique_fields = 'unique_fields'
     rich_completed = '[green]◉[/green] Completed:'
+    all = 'all'
+    source = 'source'
+    starlarkrun = 'StarlarkRun'
+    configmap = 'ConfigMap'
+    general_timeout = 15
     # js = '.js'
 
 LOG_LEVEL_MAP = {
     "debug": logging.DEBUG,
     "info": logging.INFO,
     "warning": logging.WARNING,
-    Constants.default_log_level: logging.ERROR,
+    Constants.LOG_LEVEL.value: logging.ERROR,
     "critical": logging.CRITICAL
 }
 
@@ -78,25 +88,27 @@ class TemplatesFiles:
     main_script = 'main.js'
     post_script = 'post_script.js'
     deleteDuplicateCollection = 'delete-duplicate-collection.js'
+    starlarkrun = 'starlarkrun.star'
 
 class FileStructure(Enum):
 
     def conform_path(input_path: str):
-        '''Ensure the path is os compliant'''
+        """Ensure the path is os compliant"""
         converted_path = os.path.join(*input_path.split("\\"))
         return os.path.normpath(converted_path)
     
     CONFIGFILE = 'weaveconfig.yml'
     METAFOLDER = ".mongocd"
-    TEMPLATESFOLDER = conform_path(f"{METAFOLDER}/templates")
-    GETCOLLECTIONDATA = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.getCollectionData}')
-    UTILS = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.utils}')
-    COPYINDICES = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.copyIndices}')
-    DEEPCOMPARECOPY = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.compare_insert}')
-    DUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.duplicateCollections}')
-    COPYDATA = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.copyData}')
-    # INIT_SCRIPT = conform_path(f'{TEMPLATESFOLDER}/init_script.js')
-    DELETEDUPLICATECOLLECTION = conform_path(f'{TEMPLATESFOLDER}/{TemplatesFiles.deleteDuplicateCollection}')
+    JSTEMPLATESFOLDER = conform_path(f"{METAFOLDER}/jstemplates")
+    GETCOLLECTIONDATA = conform_path(f'{JSTEMPLATESFOLDER}/{TemplatesFiles.getCollectionData}')
+    UTILS = conform_path(f'{JSTEMPLATESFOLDER}/{TemplatesFiles.utils}')
+    COPYINDICES = conform_path(f'{JSTEMPLATESFOLDER}/{TemplatesFiles.copyIndices}')
+    DEEPCOMPARECOPY = conform_path(f'{JSTEMPLATESFOLDER}/{TemplatesFiles.compare_insert}')
+    DUPLICATECOLLECTION = conform_path(f'{JSTEMPLATESFOLDER}/{TemplatesFiles.duplicateCollections}')
+    COPYDATA = conform_path(f'{JSTEMPLATESFOLDER}/{TemplatesFiles.copyData}')
+    # INIT_SCRIPT = conform_path(f'{JSTEMPLATESFOLDER}/init_script.js')
+    DELETEDUPLICATECOLLECTION = conform_path(f'{JSTEMPLATESFOLDER}/{TemplatesFiles.deleteDuplicateCollection}')
+    STARTEMPLATESFOLDER = conform_path(f"{METAFOLDER}/startemplates")
     OUTPUTFOLDER = "output"
     BASEFOLDER = "base"
     CHANGESETFOLDER = "changeset"
