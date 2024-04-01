@@ -122,13 +122,11 @@ class Kustomize(BaseModel):
                 # Inline JSON6902
                 if isinstance(patch_operations, dict):
                     #strategic merge patch
-                    # enrich patch_operations
-                    for key in document_dict['data']:
-                        if key not in patch_operations:
-                            patch_operations[key] = document_dict['data'][key]
+                    patch_operations = self.enrich_inline_json6902(
+                        patch_operations, document_dict['data'])
                     document_dict['data'] = \
                         JsonPatch.from_diff(documentdata.data, patch_operations) \
-                                .apply(document_dict['data'])
+                                 .apply(document_dict['data'])
                 # print(f"current data: {document_dict['data']}")
             except Exception as ex:
                 di[Logger].error(
@@ -138,6 +136,28 @@ class Kustomize(BaseModel):
                 return ReturnCode.EXECUTION_ERROR
 
         return document_dict['data']
+    
+    @private
+    def enrich_inline_json6902(self, patch_operations: dict,
+            source_data: dict) -> dict:
+        """
+        Enriches a user given json6902 patch to include data
+        from the source data. That way only the differences
+        will be applied.
+
+        Required as default json-patch behaviour removes other keys
+        If not specified by user.
+        """
+        patch_operations = patch_operations.copy()
+        for key, value in source_data.items():
+            if key not in patch_operations:
+                patch_operations[key] = value
+            #recurse on dict
+            elif isinstance(patch_operations[key], dict):
+                patch_operations[key] = \
+                    self.enrich_inline_json6902(
+                        patch_operations[key], value)
+        return patch_operations
 
 # advise people to use starlark for data tests and validation
 

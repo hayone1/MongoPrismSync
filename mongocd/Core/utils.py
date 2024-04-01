@@ -201,7 +201,7 @@ def match_document(document_dict: dict, filter_dict: dict) -> bool:
     return True
 
 @staticmethod
-def match_filter(data: dict, filter_dict: dict, exclude_keys: list = None) -> bool:
+def match_filter(data: dict, filter_dict: dict, exclude_keys: list = list()) -> bool:
     """
     Returns True if data matches filter(via a recursive check) otherwise returns False
 

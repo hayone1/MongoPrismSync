@@ -123,10 +123,18 @@ run `pip install pipenv` or `pip3 install pipenv`.
 run `pipenv install` and you're good to start coding.
 
 ## TODO
-- Weave should check if the current files have been manually edited before proceeding to adjust
+- build should check if the current files have been manually edited before proceeding to adjust
 - in debug mode, it should be apparent when a default value is being used for a field
-- replace ABC with accessify to improve access levels and interface strictness
+
 - write changesets that is compatible with liquidbase and bytebase
+- diff like flux diff
+
+- mongocd diff remote -> remote changesets in an interactive way
+
+- mongocd diff -> local changesets in an interactive way
+
+- There should also be an option to delete the base and overlay folder. This should be represented in the weaveconfig,yml 
+
 ### Ideas
 Final name of the product couls be mongocd or mongoci or mongocd
 
