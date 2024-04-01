@@ -134,6 +134,7 @@ run `pipenv install` and you're good to start coding.
 - mongocd diff -> local changesets in an interactive way
 
 - There should also be an option to delete the base and overlay folder. This should be represented in the weaveconfig,yml 
+- Dealing with lists
 
 ### Ideas
 Final name of the product couls be mongocd or mongoci or mongocd
